@@ -204,3 +204,4 @@ fabric.properties
 *.bak
 
 /node_modules/
+/logs/*
