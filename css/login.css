@@ -1,0 +1,47 @@
+body {
+	margin-top:50px;
+	background-color:#2B2B2B;
+	font-family:Segoe UI Light, Segoe UI, Sans-Serif, serif;
+	color:white;
+}
+#welcome {
+	margin:0 auto 15px auto;
+	width:321px;
+}
+#login_form {
+	margin:0 auto;
+	width:192px;
+	border:1px solid #eaffe2;
+	padding:20px;
+}
+#login_form label {
+	margin-bottom:14px;
+	display:block;
+}
+#login_msg {
+	margin:0 auto 14px auto;
+	width:154px;
+}
+#username, #password, #login_button {
+	display:block;
+	clear:left;
+}
+#username, #password {
+	margin-left:14px;
+	background-color:transparent;
+	border:1px solid #eaffe2;
+	padding:3px;
+	color:white;
+}
+#login_button {
+	margin:0 auto;
+	padding:7px 8px 9px 8px;
+	background-color:transparent;
+	border:1px solid #eaffe2;
+	color:white;
+	font-family:Segoe UI Light, Segoe UI, Sans-Serif, serif;
+	cursor:pointer;
+}
+#login_button:hover {
+	background-color:#30A800;
+}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>FSM</title>
+		<link href="/css/fsm.css" rel="stylesheet" type="text/css">
+		<script src="/js/util.js" type="text/javascript"></script>
+		<script src="/js/fsm.js" type="text/javascript"></script>
+	</head>
+	<body>
+		<header>
+			<div id="greeting">Hello {username}!</div>
+			<form id="logout_form" method="post" action="/auth/logout">
+				<input id="logout_button" type="submit" value="Log Out"/>
+			</form>
+			<div id="title">Factorio <span id="title_label">Status</span></div>
+		</header>
+		<nav>
+			<ul id="nav_links">
+				<li id="status_nav" class="selected_nav">Status</li>
+				<li id="console_nav">Console</li>
+				<li id="mods_nav">Mods</li>
+				<li id="config_nav">Configuration</li>
+			</ul>
+		</nav>
+		<main>
+			<section id="status_sec">
+				<div>Hello</div>
+				<button id="start_my_game">Start my_game</button>
+				<button id="stop_my_game">Stop my_game</button>
+				<button id="send_command_to_my_game">Send a command to my_game</button>
+				<button id="start_other_game">Start other_game</button>
+				<button id="stop_other_game">Stop other_game</button>
+			</section>
+			<section id="console_sec" class="hidden">this</section>
+			<section id="mods_sec" class="hidden">is</section>
+			<section id="config_sec" class="hidden">me</section>
+		</main>
+	</body>
+</html>

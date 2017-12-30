@@ -1,0 +1,84 @@
+html, body {
+	font-family:Segoe UI Light, Segoe UI, Sans-Serif, serif;
+	margin:0;
+	padding:0;
+	width:100%;
+	height:100%;
+	background-color:#2B2B2B;
+	color:white;
+}
+header {
+	background-color:#0E4000;
+	height:35px;
+	padding:5px 10px;
+	line-height:30px;
+}
+#greeting {
+	margin-top:2px;
+	float:left;
+}
+#title {
+	margin:2px auto 0 auto;
+	width:300px;
+	text-align:center;
+}
+#logout_form {
+	float:right;
+	margin:0;
+}
+#logout_button {
+	background-color:transparent;
+	border:1px solid #EAFFE2;
+	color:white;
+	font-family:Segoe UI Light, Segoe UI, Sans-Serif, serif;
+	padding:7px 8px 9px 8px;
+	cursor:pointer;
+}
+#logout_button:hover {
+	background-color:#30A800;
+}
+nav {
+	background-color:#101011;
+	float:left;
+	height:calc(100% - 60px);
+	width:165px;
+	padding-top:15px;
+	border-right:1px solid #8C8C8C;
+}
+nav ul {
+	list-style:none;
+	margin:0;
+	padding:0;
+}
+nav ul li {
+	padding:10px;
+	font-size:15px;
+	cursor:pointer;
+}
+nav ul li:hover {
+	background-color:#30A800;
+	text-shadow:2px 2px #000000;
+}
+.selected_nav {
+	background-color:#1D6600;
+}
+main {
+	float:right;
+	width:calc(100% - 186px);
+	height:calc(100% - 65px);
+	padding:10px;
+}
+.hidden {
+	display:none;
+}
+button {
+	padding:8px;
+	background-color:transparent;
+	border:1px solid #EAFFE2;
+	color:white;
+	font-family:Segoe UI Light, Segoe UI, Sans-Serif, serif;
+	cursor:pointer;
+}
+button:hover {
+	background-color:#30A800;
+}

@@ -1,0 +1,7 @@
+{
+	"factorio_root_path": "",
+	"save_file": "",
+	"web_admin_host": "0.0.0.0",
+	"web_admin_port": 9876,
+	"web_admin_users": []
+}
