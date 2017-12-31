@@ -22,6 +22,10 @@ header {
 	width:300px;
 	text-align:center;
 }
+#restart_fsm {
+	float:right;
+	margin-right:4px;
+}
 #logout_form {
 	float:right;
 	margin:0;
@@ -69,7 +73,7 @@ main {
 	padding:10px;
 }
 .hidden {
-	display:none;
+	display:none !important;
 }
 button {
 	padding:8px;
@@ -81,4 +85,25 @@ button {
 }
 button:hover {
 	background-color:#30A800;
+}
+#overlay {
+	position:fixed;
+	display:table;
+	width:100%;
+	height:100%;
+	background-color:rgba(43, 43, 43, 0.6);
+	top:0;
+	left:0;
+	text-align:center;
+}
+#overlay_cell {
+	display:table-cell;
+	vertical-align:middle;
+}
+#overlay_msg {
+	border:1px solid black;
+	width:101px;
+	margin:auto;
+	padding:10px;
+	background-color:#191919;
 }

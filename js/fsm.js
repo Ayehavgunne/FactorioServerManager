@@ -11,19 +11,32 @@ on_load(function () {
 
 		$('#title_label').text($(this).text());
 	});
+	$('#restart_fsm').click(function () {
+		ajax('restart_server');
+		$('#overlay').show();
+		$('#overlay_msg').text('Restarting FSM');
+		setTimeout(function () {
+			window.location.reload();
+		}, 20000);
+	});
 	$('#start_my_game').click(function () {
-		ajax('start_factorio_instance/my_game');
+		ajax('factorio/my_game/start');
 	});
 	$('#stop_my_game').click(function () {
-		ajax('stop_factorio_instance/my_game');
+		ajax('factorio/my_game/stop');
 	});
-	$('#send_command_to_my_game').click(function () {
-		ajax('send_command/my_game');
+	$('#status_my_game').click(function () {
+		ajax('factorio/my_game/status');
 	});
 	$('#start_other_game').click(function () {
-		ajax('start_factorio_instance/other_game');
+		ajax('factorio/other_game/start');
 	});
 	$('#stop_other_game').click(function () {
-		ajax('stop_factorio_instance/other_game');
+		ajax('factorio/other_game/stop');
+	});
+	$('#get_factorio_versions').click(function () {
+		ajax('get_factorio_versions', 'GET', null, 'json', function (versions) {
+			print(versions);
+		});
 	});
 });

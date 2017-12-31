@@ -1,6 +1,9 @@
 from subprocess import Popen
 from subprocess import PIPE
 
+from psutil import Process
+from humanize import naturalsize
+
 from fsm import APP_DIR
 from fsm.util import run_async
 from fsm.settings import app_settings
@@ -15,13 +18,13 @@ class FactorioManager(object):
 
 	@run_async
 	def start(self):
-		log.debug('Starting Factorio instance {}'.format(self.name))
+		log.info('Starting Factorio instance {}'.format(self.name))
 		if self.name in app_settings.factorio_processes:
-			if isinstance(app_settings.factorio_processes[self.name], Popen):
+			if isinstance(self.process, Popen):
 				# TODO: need to do more here to actaully check if it is running
 				log.warn('{} factorio instance is already running'.format(self.name))
 				return
-		if self.name not in app_settings.factorio_instances.keys():
+		if self.name not in app_settings.factorio_instances:
 			log.warn('{} factorio instance does not exist'.format(self.name))
 			return
 		commands = [
@@ -43,15 +46,32 @@ class FactorioManager(object):
 		pass
 
 	@run_async
+	def status(self):
+		if self.process:
+			ps_proc = Process(self.process.pid)
+			with ps_proc.oneshot():
+				log.info('Name: {} PID: {} CPU Percent: {} Memory Usage: {} Status: {}'.format(
+					ps_proc.name(), self.process.pid, ps_proc.cpu_percent(.1), naturalsize(ps_proc.memory_info().rss), ps_proc.status()
+				))
+
+	@run_async
 	def stop(self):
-		log.debug('Stopping {}'.format(self.name))
-		self.process.terminate()
+		if self.process:
+			log.debug('Stopping {}'.format(self.name))
+			self.process.terminate()
 
 	@run_async
 	def kill(self):
-		log.debug('Killing {}'.format(self.name))
-		self.process.kill()
+		if self.process:
+			log.debug('Killing {}'.format(self.name))
+			self.process.kill()
 
 	@run_async
 	def send_command(self, command):
-		self.process.communicate('{}\n'.format(command).encode())
+		# TODO: This does not work. No idea how it should work
+		if self.process:
+			self.process.communicate('{}\n'.format(command).encode())
+
+	@run_async
+	def update_version(self, version_list, experimental=False, version=None):
+		pass

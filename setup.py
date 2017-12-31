@@ -47,5 +47,5 @@ setup(
 	entry_points={
 		'console_scripts': ['fsm = {}.start:main'.format(package_name)]
 	},
-	install_requires=['cherrypy', 'prompt_toolkit']
+	install_requires=['cherrypy', 'prompt_toolkit', 'psutil', 'humanize']
 )

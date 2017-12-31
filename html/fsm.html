@@ -13,6 +13,7 @@
 			<form id="logout_form" method="post" action="/auth/logout">
 				<input id="logout_button" type="submit" value="Log Out"/>
 			</form>
+			<button id="restart_fsm">Restart FSM</button>
 			<div id="title">Factorio <span id="title_label">Status</span></div>
 		</header>
 		<nav>
@@ -28,13 +29,15 @@
 				<div>Hello</div>
 				<button id="start_my_game">Start my_game</button>
 				<button id="stop_my_game">Stop my_game</button>
-				<button id="send_command_to_my_game">Send a command to my_game</button>
+				<button id="status_my_game">my_game Status</button>
 				<button id="start_other_game">Start other_game</button>
 				<button id="stop_other_game">Stop other_game</button>
+				<button id="get_factorio_versions">Get available versions</button>
 			</section>
 			<section id="console_sec" class="hidden">this</section>
 			<section id="mods_sec" class="hidden">is</section>
 			<section id="config_sec" class="hidden">me</section>
 		</main>
+		<div id="overlay" class="hidden"><div id="overlay_cell"><div id="overlay_msg"></div></div></div>
 	</body>
 </html>

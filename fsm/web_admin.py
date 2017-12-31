@@ -1,3 +1,6 @@
+import json
+from urllib import request
+
 import cherrypy
 
 from fsm.util import get_html
@@ -85,8 +88,46 @@ class AuthController(object):
 		raise cherrypy.HTTPRedirect(from_page or '/')
 
 
+@cherrypy.popargs('name')
+class FactorioDispatch(object):
+	@cherrypy.expose()
+	def index(self, name):
+		return name
+
+	@cherrypy.expose()
+	def start(self, name):
+		app_settings.factorio_processes[name].start()
+
+	@cherrypy.expose()
+	def stop(self, name):
+		log.info('Trying to stop {}'.format(name))
+		app_settings.factorio_processes[name].stop()
+
+	@cherrypy.expose()
+	def status(self, name):
+		app_settings.factorio_processes[name].status()
+
+
 class WebAdmin(object):
 	auth = AuthController()
+	factorio = FactorioDispatch()
+
+	def __init__(self):
+		cherrypy.engine.subscribe('start', self.start)
+		cherrypy.engine.subscribe('stop', self.stop)
+
+	@staticmethod
+	def start():
+		log.info('FSM started')
+
+	@staticmethod
+	def stop():
+		for process in app_settings.factorio_processes.values():
+			try:
+				process.stop()
+			finally:
+				pass
+		log.info('FSM stopped')
 
 	@cherrypy.expose()
 	@require()
@@ -96,17 +137,26 @@ class WebAdmin(object):
 		return get_html('fsm', {'username': username})
 
 	@cherrypy.expose()
-	def factorio_status(self, name):
-		pass
+	def restart_server(self):
+		cherrypy.engine.restart()
 
 	@cherrypy.expose()
-	def start_factorio_instance(self, name):
-		app_settings.factorio_processes[name].start()
-
-	@cherrypy.expose()
-	def stop_factorio_instance(self, name):
-		app_settings.factorio_processes[name].stop()
-
-	@cherrypy.expose()
-	def send_command(self, name):
-		app_settings.factorio_processes[name].send_command('/s hello all players!')
+	@cherrypy.tools.json_out()
+	def get_factorio_versions(self):
+		available_versions_url = 'https://www.factorio.com/get-available-versions'
+		r = request.urlopen(available_versions_url)
+		available_versions = json.load(r)['core-linux_headless64']
+		stable_version = list(filter(
+			lambda x: True if 'stable' in x else False,
+			available_versions
+		))[0]['stable']
+		available_versions = list(filter(
+			lambda x: False if 'stable' in x else True,
+			available_versions
+		))
+		version_list = sorted(
+			available_versions,
+			key=lambda s: [int(u) for u in s['to'].split('.')]
+		)
+		version_list = [u['to'] for u in version_list]
+		return {'stable': stable_version, 'version_list': version_list, 'available_versions': available_versions}

@@ -942,7 +942,8 @@ var print = console.log.bind(console);
 function ajax(url) {
 	var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'GET';
 	var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	var callback = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+	var responce_type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'text';
+	var callback = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
 
 	var httpRequest = new XMLHttpRequest();
 
@@ -951,7 +952,17 @@ function ajax(url) {
 		return false;
 	}
 	if (is_function(callback)) {
-		httpRequest.onreadystatechange = callback;
+		httpRequest.onreadystatechange = function () {
+			if (httpRequest.readyState === XMLHttpRequest.DONE) {
+				if (httpRequest.status === 200) {
+					var resp = httpRequest.responseText;
+					if (responce_type === 'json') {
+						resp = JSON.parse(resp);
+					}
+					callback(resp);
+				}
+			}
+		};
 	}
 	httpRequest.open(type, url);
 	httpRequest.send();

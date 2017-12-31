@@ -86,7 +86,11 @@ def main():
 			'server.socket_host': '0.0.0.0',
 			'server.socket_port': args.web_admin_port,
 			'log.screen': False,
-		}
+			'server.ssl_module': 'builtin',
+			'server.ssl_certificate': '{}/certs/fsm_cert.pem'.format(APP_DIR),
+			'server.ssl_private_key': '{}/certs/fsm_key.pem'.format(APP_DIR),
+		},
+
 	}
 	conf = {
 		'/': {
@@ -103,7 +107,7 @@ def main():
 		'/js': {
 			'tools.staticdir.on': True,
 			'tools.staticdir.dir': '{}/js'.format(APP_DIR),
-		}
+		},
 	}
 
 	if args.debug_cherrypy:
