@@ -9,8 +9,8 @@ from ws4py.server.cherrypyserver import WebSocketTool
 
 from fsm.util import get_html, run_in_thread
 from fsm.util import check_password
-from fsm.settings import app_settings
-from fsm.create_logs import log
+from fsm import app_settings
+from fsm import log
 
 
 SESSION_KEY = '_cp_username'

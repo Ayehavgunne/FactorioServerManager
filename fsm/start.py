@@ -9,10 +9,10 @@ from ws4py.server.cherrypyserver import WebSocketPlugin
 
 from fsm import APP_DIR
 from fsm.util import parse_the_args
-from fsm.settings import get_settings
-from fsm.settings import app_settings
+from fsm import get_settings
+from fsm import app_settings
 from fsm.web_admin import WebAdmin
-from fsm.create_logs import log
+from fsm import log
 from fsm.factorio_manager import FactorioManager
 
 

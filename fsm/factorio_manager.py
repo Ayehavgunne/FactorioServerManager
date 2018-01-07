@@ -10,6 +10,7 @@ from subprocess import PIPE
 from configparser import ConfigParser
 
 from psutil import Process
+from psutil import NoSuchProcess
 from psutil import virtual_memory
 from humanize import naturalsize
 
@@ -17,9 +18,9 @@ from fsm import OS_WIN
 from fsm import TOTAL_MEMORY
 from fsm.util import TqdmUpTo
 from fsm.util import run_in_thread
-from fsm.settings import app_settings
-from fsm.create_logs import log
-from fsm.create_logs import make_log
+from fsm import app_settings
+from fsm import log
+from fsm import make_log
 
 
 # TODO Need to account for Steam in some of these paths
@@ -207,14 +208,18 @@ class FactorioManager(object):
 		if self.process:
 			if not self._ps_proc:
 				self._ps_proc = Process(self.process.pid)
-			data = {
-				'status': self._ps_proc.status(),
-				'pid': self.process.pid,
-				'cpu': self._ps_proc.cpu_percent(interval=2),
-				'mem': naturalsize(self._ps_proc.memory_info().rss),
-				'total_mem': naturalsize(TOTAL_MEMORY),
-				'available_mem': naturalsize(self._virtual_mem.available)
-			}
+			try:
+				data = {
+					'status': self._ps_proc.status(),
+					'pid': self.process.pid,
+					'cpu': self._ps_proc.cpu_percent(interval=2),
+					'mem': naturalsize(self._ps_proc.memory_info().rss),
+					'total_mem': naturalsize(TOTAL_MEMORY),
+					'available_mem': naturalsize(self._virtual_mem.available)
+				}
+			except NoSuchProcess:
+				log.warn('Factorio Process {} does not exist anymore'.format(self.name))
+				return
 			if self._status_queue.full():
 				self._status_queue.get()
 			self._status_queue.put(data)

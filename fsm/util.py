@@ -11,7 +11,7 @@ from prompt_toolkit import prompt
 from fsm import APP_DIR
 from fsm import current_settings
 from fsm.validators import BooleanValidator
-from fsm.create_logs import log
+from fsm import log
 
 
 def run_in_thread(func):
@@ -78,25 +78,40 @@ def parse_the_args():
 	log.debug('Parsing the arguments from the command line')
 	parser = argparse.ArgumentParser(
 		description='FSM is not the Flying Spagetti Monster (at least in this case). It is, however, '
-					'the Factorio Server Manager.')
+		'the Factorio Server Manager.'
+	)
 
-	parser.add_argument('--setup', action='store_true', dest='run_setup', default=False,
-		help='The path to the root of the Factorio server installation')
-	parser.add_argument('--web_admin_port', action='store', dest='web_admin_port', type=int,
+	parser.add_argument(
+		'--setup', action='store_true', dest='run_setup', default=False,
+		help='The path to the root of the Factorio server installation'
+	)
+	parser.add_argument(
+		'--web_admin_port', action='store', dest='web_admin_port', type=int,
 		default=int(current_settings['web_admin_port']),
 		help='The port that the Adminitration UI will bind to. Setting this will ignore the value in the config file '
-			 'for this instance only.')
-	parser.add_argument('--launch_factorio_instances', action='store', dest='launch_factorios', default=None,
+		'for this instance only.'
+	)
+	parser.add_argument(
+		'--launch_factorio_instances', action='store', dest='launch_factorios', default=None,
 		help='Will automatically start up the Factorio server(s) with the launching of FSM instead of having to start '
-			 'factorio from the web interface. Useful for starting the Factorio server(s) at boot of host machine. Just '
-			 'enter the names of the instances to start seperated by a comma')
-	parser.add_argument('--debug_cherrypy', action='store_true', dest='debug_cherrypy', default=False,
-		help='Sets cherrypy to log to screen')
-	parser.add_argument('--debug', action='store_true', dest='debug', default=False,
-		help='Sets log level to debug to show extra messaging')
-	parser.add_argument('--start_in_background', action='store_true', dest='start_in_background', default=False,
-		help='Starts FSM in the background and will continue to run even after this shell has closed')
-	parser.add_argument('--stop', action='store_true', dest='stop', default=False,
-		help='Shuts down the FSM server which in tern will shutdown all Factorio game instances that were started by it')
+		'factorio from the web interface. Useful for starting the Factorio server(s) at boot of host machine. Just '
+		'enter the names of the instances to start seperated by a comma'
+	)
+	parser.add_argument(
+		'--debug_cherrypy', action='store_true', dest='debug_cherrypy', default=False,
+		help='Sets cherrypy to log to screen'
+	)
+	parser.add_argument(
+		'--debug', action='store_true', dest='debug', default=False,
+		help='Sets log level to debug to show extra messaging'
+	)
+	parser.add_argument(
+		'--start_in_background', action='store_true', dest='start_in_background', default=False,
+		help='Starts FSM in the background and will continue to run even after this shell has closed'
+	)
+	parser.add_argument(
+		'--stop', action='store_true', dest='stop', default=False,
+		help='Shuts down the FSM server which in tern will shutdown all Factorio game instances that were started by it'
+	)
 
 	return parser.parse_args()

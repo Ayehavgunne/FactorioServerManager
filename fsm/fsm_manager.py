@@ -14,12 +14,13 @@ from fsm.util import yes_no_prompt
 from fsm.util import parse_the_args
 from fsm.start import main
 
-from fsm.settings import save_settings
+from fsm import save_settings
+from fsm import current_settings
 from fsm.validators import PortNumberValidator
 from fsm.validators import FactorioRootValidator
 from fsm.validators import FactorioPortNumberValidator
 from fsm.validators import FactorioInstanceNameValidator
-from fsm.create_logs import log
+from fsm import log
 
 
 common_paths = {
