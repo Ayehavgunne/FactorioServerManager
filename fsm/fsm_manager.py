@@ -4,6 +4,7 @@ import sys
 
 from pathlib import Path
 from subprocess import Popen
+from subprocess import DEVNULL
 
 from psutil import Process
 
@@ -21,7 +22,6 @@ from fsm.validators import FactorioRootValidator
 from fsm.validators import FactorioPortNumberValidator
 from fsm.validators import FactorioInstanceNameValidator
 from fsm import log
-
 
 common_paths = {
 	True: [
@@ -181,7 +181,8 @@ def run():
 		if len(sys.argv) > 1:
 			commands.extend(sys.argv[1:])
 
-		process = Popen(commands)
+		process = Popen(commands, stdout=DEVNULL, stderr=DEVNULL)
+
 		with open('fsm.pid', 'w+') as pid_file:
 			pid_file.write(str(process.pid))
 	elif args.stop:
