@@ -1,6 +1,31 @@
 on_load(function() {
 	let links = $('#nav_links').find_all('li')
+	let current_game_name = $('#selected_game').val()
+
+	ajax({
+		url: cur_game_url('factorio/`current_game`/updates_available'),
+		complete: function(result) {
+			result = JSON.parse(result)
+			update_available(result)
+		}
+	})
+
+
+	let factorio_ws = factorio_socket()
+	let log_ws
+
+	$('.game_name').text(current_game_name)
+	get_current_verison()
+	$('#selected_game').add_event('change', function() {
+		current_game_name = $(this).val()
+		$('.game_name').text(current_game_name)
+		get_current_verison()
+	})
+
 	links.click(function () {
+		if ($('#console_sec').has_class('hidden')) {
+			$('#console_box').html('')
+		}
 		$('section').hide()
 		$('#' + this.id.replace('nav', 'sec')).show()
 
@@ -9,32 +34,159 @@ on_load(function() {
 
 		$('#title_label').text($(this).text())
 	})
-	$('#restart_fsm').click(function() {
-		ajax('restart_server')
+
+	$('#start_my_game').click(function() {
+		$('#game_status').text('Status: Starting')
+	})
+
+	$('#status_nav').click(function() {
+		factorio_ws = factorio_socket()
+		close_log_socket()
+	})
+	$('#console_nav').click(function() {
+		close_factorio_socket()
+		log_ws = log_socket()
+	})
+
+	$('#restart_fsm').click(function(url) {
+		close_factorio_socket()
+
+		ajax({url: url})
+
 		$('#overlay').show()
 		$('#overlay_msg').text('Restarting FSM')
+
 		setTimeout(function() {
 			window.location.reload()
 		}, 20000)
 	})
-	$('#start_my_game').click(function() {
-		ajax('factorio/my_game/start')
+
+	$('#logout_button').click(function() {
+		close_factorio_socket()
+		close_log_socket()
 	})
-	$('#stop_my_game').click(function() {
-		ajax('factorio/my_game/stop')
+
+	$('.action').click(function(url) {
+		ajax({url: cur_game_url(url)})
 	})
-	$('#status_my_game').click(function() {
-		ajax('factorio/my_game/status')
-	})
-	$('#start_other_game').click(function() {
-		ajax('factorio/other_game/start')
-	})
-	$('#stop_other_game').click(function() {
-		ajax('factorio/other_game/stop')
-	})
-	$('#get_factorio_versions').click(function() {
-		ajax('get_factorio_versions', 'GET', null, 'json', function(versions) {
-			print(versions)
+
+	$('#check_for_update').click(function(url) {
+		ajax({
+			url: cur_game_url(url),
+			complete: update_available
 		})
 	})
+
+	$('#get_update').click(function(url) {
+		let version = $('#update_version').text()
+		if (version) {
+			url = url.replace('`current_game`', current_game_name).replace('`version`', version)
+			ajax({url: cur_game_url(url)})
+		}
+	})
+
+	function cur_game_url(url) {
+		return url.replace('`current_game`', current_game_name)
+	}
+
+	function get_current_verison() {
+		ajax({
+			url: cur_game_url('factorio/`current_game`/get_current_version'),
+			complete: function(version) {
+				$('#current_version').text(version)
+			}
+		})
+	}
+
+	function update_available(responce) {
+		if (responce) {
+			$('#update_available').show()
+			$('#update_version').text(responce['version'])
+		}
+		else {
+			print('No update available')
+		}
+	}
+
+	function factorio_socket() {
+		if (!factorio_ws || factorio_ws.readyState === factorio_ws.CLOSED) {
+			return websocket({
+				url: 'ws/factorio_status?name=' + current_game_name,
+				on_message: function(event) {
+					let message = JSON.parse(event.data)
+
+					if (message) {
+						$('#game_status').text('Status: ' + message['status'])
+						$('#game_pid').text('PID: ' + message['pid'])
+						$('#game_cpu').text('CPU Percent: ' + message['cpu'])
+						$('#game_mem').text('Memory Usage: ' + message['mem'])
+						$('#total_mem').text('Total Memory: ' + message['total_mem'])
+						$('#available_mem').text('Available Memory: ' + message['available_mem'])
+					}
+					else {
+						$('#game_status').text('Status: Not Running')
+						$('#game_pid').text('')
+						$('#game_cpu').text('')
+						$('#game_mem').text('')
+						$('#total_mem').text('')
+						$('#available_mem').text('')
+					}
+				},
+				on_open: function() {
+					ajax({url: 'start_stream/factorio'})
+				}
+			})
+		}
+		else {
+			return factorio_ws
+		}
+	}
+
+	function log_socket() {
+		if (!log_ws || log_ws.readyState === log_ws.CLOSED) {
+			return websocket({
+				url: 'ws/log_tail?name=' + current_game_name,
+				on_message: function(event) {
+					let message = event.data
+
+					if (message) {
+						let message_line = tag('div', message, cls('console_line'))
+						let console_box = $('#console_box')
+						console_box.append(message_line)
+						let at_bottom = if_near_bottom(console_box, 2)
+						if (at_bottom) {
+							let sb = console_box.item()
+							sb.scrollTop = sb.scrollHeight
+						}
+					}
+				},
+				on_open: function() {
+					ajax({url: 'start_stream/log'})
+				}
+			})
+		}
+		else {
+			return log_ws
+		}
+	}
+
+	function close_log_socket() {
+		if (log_ws && log_ws.readyState !== log_ws.CLOSED) {
+			log_ws.close()
+			log_ws = null
+			$('#game_status').text('')
+			$('#game_pid').text('')
+			$('#game_cpu').text('')
+			$('#game_mem').text('')
+			$('#total_mem').text('')
+			$('#available_mem').text('')
+		}
+	}
+
+	function close_factorio_socket() {
+		if (factorio_ws && factorio_ws.readyState !== factorio_ws.CLOSED) {
+			factorio_ws.close()
+			factorio_ws = null
+		}
+	}
 })

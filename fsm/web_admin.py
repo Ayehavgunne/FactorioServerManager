@@ -1,15 +1,22 @@
 import json
-from urllib import request
+from collections import deque
 
 import cherrypy
+from time import sleep
+from ws4py.websocket import WebSocket
+from ws4py.server.cherrypyserver import WebSocketPlugin
+from ws4py.server.cherrypyserver import WebSocketTool
 
-from fsm.util import get_html
+from fsm.util import get_html, run_in_thread
 from fsm.util import check_password
 from fsm.settings import app_settings
 from fsm.create_logs import log
 
 
 SESSION_KEY = '_cp_username'
+instances = app_settings.factorio_instances
+cherrypy.tools.websocket = WebSocketTool()
+log_history = deque(maxlen=20)
 
 
 def check_credentials(username, password):
@@ -88,29 +95,126 @@ class AuthController(object):
 		raise cherrypy.HTTPRedirect(from_page or '/')
 
 
+class CustomWS(WebSocket):
+	def __init__(self, sock, protocols=None, extensions=None, environ=None, heartbeat_freq=None):
+		super().__init__(sock, protocols, extensions, environ, heartbeat_freq)
+		self.instance = None
+		self.broadcast = False
+
+	def set_instance(self, instance):
+		self.instance = instance
+		self.broadcast = True
+
+	def opened(self):
+		log.debug('{} Socket was opened'.format(self.__class__.__name__.replace('WSHandler', '')))
+
+	def close(self, code=1000, reason=''):
+		super().close(code, reason)
+		self.broadcast = False
+
+	def closed(self, code, reason=None):
+		self.broadcast = False
+
+	def received_message(self, message):
+		log.info(message)
+
+	def __str__(self):
+		return self.__class__.__name__
+
+
+class FactorioWSHandler(CustomWS):
+	@run_in_thread
+	def start_stream(self):
+		if self.instance is not None:
+			while self.broadcast:
+				data = self.instance.status()
+				data = json.dumps(data)
+				if self.broadcast and not self.client_terminated:
+					self.send(data)
+				sleep(2)
+
+
+class LogWSHandler(CustomWS):
+	@run_in_thread
+	def start_stream(self):
+		for line in log_history:
+			self.send(line)
+		if self.instance is not None:
+			while self.broadcast:
+				data = self.instance.get_log_line()
+				if data:
+					data = json.dumps(data)
+					log_history.append(data)
+					if self.broadcast and not self.client_terminated:
+						self.send(data)
+				else:
+					sleep(.1)
+
+
+class Ws(object):
+	@cherrypy.expose()
+	@cherrypy.tools.websocket(handler_cls=FactorioWSHandler)
+	def factorio_status(self, name):
+		handler = cherrypy.request.ws_handler
+		log.debug('Factorio Status socket handler created {}'.format(handler))
+		handler.set_instance(instances[name])
+		cherrypy.engine.factorio_ws_handler = handler
+
+	@cherrypy.expose()
+	@cherrypy.tools.websocket(handler_cls=LogWSHandler)
+	def log_tail(self, name):
+		handler = cherrypy.request.ws_handler
+		log.debug('Log Tail socket handler created {}'.format(handler))
+		handler.set_instance(instances[name])
+		cherrypy.engine.log_ws_handler = handler
+
+
 @cherrypy.popargs('name')
 class FactorioDispatch(object):
 	@cherrypy.expose()
-	def index(self, name):
-		return name
-
-	@cherrypy.expose()
 	def start(self, name):
-		app_settings.factorio_processes[name].start()
+		instances[name].start()
 
 	@cherrypy.expose()
 	def stop(self, name):
 		log.info('Trying to stop {}'.format(name))
-		app_settings.factorio_processes[name].stop()
+		instances[name].stop()
 
 	@cherrypy.expose()
 	def status(self, name):
-		app_settings.factorio_processes[name].status()
+		return instances[name].status()
+
+	@cherrypy.expose()
+	def get_current_version(self, name):
+		return instances[name].version
+
+	@cherrypy.expose()
+	def check_for_update(self, name):
+		update = instances[name].check_for_update()
+		if update:
+			return '{"version": "%s"}' % update
+		else:
+			return 'false'
+
+	@cherrypy.expose()
+	def updates_available(self, name):
+		update = instances[name].update_available
+		if update:
+			return '{"version": "%s"}' % update
+		else:
+			return 'false'
+
+	@cherrypy.expose()
+	def update(self, name, version):
+		log.info(version)
+		instances[name].download_update(version)
+		instances[name].apply_update()
 
 
 class WebAdmin(object):
 	auth = AuthController()
 	factorio = FactorioDispatch()
+	ws = Ws()
 
 	def __init__(self):
 		cherrypy.engine.subscribe('start', self.start)
@@ -118,45 +222,46 @@ class WebAdmin(object):
 
 	@staticmethod
 	def start():
-		log.info('FSM started')
+		log.info('FSM server started')
 
 	@staticmethod
 	def stop():
-		for process in app_settings.factorio_processes.values():
+		if hasattr(cherrypy.engine, 'factorio_ws_handler'):
+			cherrypy.engine.factorio_ws_handler.close()
+		if hasattr(cherrypy.engine, 'log_ws_handler'):
+			cherrypy.engine.log_ws_handler.close()
+		for process in instances.values():
 			try:
 				process.stop()
 			finally:
 				pass
-		log.info('FSM stopped')
+		log.info('FSM server stopped')
 
 	@cherrypy.expose()
 	@require()
 	def index(self):
 		sess = cherrypy.session
 		username = sess.get(SESSION_KEY, None)
-		return get_html('fsm', {'username': username})
+		games = ''.join([
+			'<option value={0}>{0}</option>'.format(name)
+			if x != 0 else '<option value={0} selected=true>{0}</option>'.format(name)
+			for x, name in enumerate(instances.keys())
+		])
+		return get_html('fsm', {'username': username, 'games': games})
+
+	@cherrypy.expose()
+	def start_stream(self, stream_type):
+		if stream_type == 'factorio':
+			if hasattr(cherrypy.engine, 'factorio_ws_handler'):
+				cherrypy.engine.factorio_ws_handler.start_stream()
+		if stream_type == 'log':
+			if hasattr(cherrypy.engine, 'log_ws_handler'):
+				cherrypy.engine.log_ws_handler.start_stream()
 
 	@cherrypy.expose()
 	def restart_server(self):
 		cherrypy.engine.restart()
 
-	@cherrypy.expose()
-	@cherrypy.tools.json_out()
-	def get_factorio_versions(self):
-		available_versions_url = 'https://www.factorio.com/get-available-versions'
-		r = request.urlopen(available_versions_url)
-		available_versions = json.load(r)['core-linux_headless64']
-		stable_version = list(filter(
-			lambda x: True if 'stable' in x else False,
-			available_versions
-		))[0]['stable']
-		available_versions = list(filter(
-			lambda x: False if 'stable' in x else True,
-			available_versions
-		))
-		version_list = sorted(
-			available_versions,
-			key=lambda s: [int(u) for u in s['to'].split('.')]
-		)
-		version_list = [u['to'] for u in version_list]
-		return {'stable': stable_version, 'version_list': version_list, 'available_versions': available_versions}
+
+WebSocketPlugin(cherrypy.engine).subscribe()
+cherrypy.engine.signals.subscribe()

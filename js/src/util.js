@@ -41,6 +41,14 @@ function is_object(val) {
 	return ((typeof val === 'function') || (typeof val === 'object'));
 }
 
+function is_undef(obj) {
+	return typeof obj === 'undefined'
+}
+
+function is_null(obj) {
+	return obj === null
+}
+
 function click_outside_close(element, callback) {
 	add_event(document, 'mouseup', function close(e) {
 		if (element !== e.target && !element.contains(e.target)) {
@@ -97,6 +105,14 @@ function tag_factory(tag) {
 
 class EnhancedElement {
 	constructor(dom_element) {
+		if (is_null(dom_element)) {
+			console.error('dom_element was null')
+			return
+		}
+		else if (is_undef(dom_element)) {
+			console.error('dom_element was undefined')
+			return
+		}
 		this.element = dom_element
 	}
 
@@ -106,6 +122,10 @@ class EnhancedElement {
 
 	find_all(identifier, index=0) {
 		return find_elements(identifier, this.element, index)
+	}
+
+	item() {
+		return this.element
 	}
 
 	hide() {
@@ -143,7 +163,7 @@ class EnhancedElement {
 	}
 
 	text(new_text=null) {
-		if (new_text) {
+		if (!is_null(new_text)) {
 			this.element.innerText = new_text
 		}
 		else {
@@ -152,7 +172,7 @@ class EnhancedElement {
 	}
 
 	html(new_html=null) {
-		if (new_html) {
+		if (!is_null(new_html)) {
 			this.element.innerHTML = new_html
 		}
 		else {
@@ -160,8 +180,37 @@ class EnhancedElement {
 		}
 	}
 
+	val(new_val=null) {
+		if (!is_null(new_val)) {
+			if (this.element.tagName === 'select') {
+				if (is_number(new_val)) {
+					this.element.selectedIndex = new_val
+				}
+				else {
+					for (let [x, opt] of this.element.options.entries()) {
+						if (opt.value === new_val) {
+							this.element.selectedIndex = x
+							break
+						}
+					}
+				}
+			}
+			else {
+				this.element.value = new_val
+			}
+		}
+		else {
+			if (this.element.tagName === 'select') {
+				return this.element.options[this.element.selectedIndex].value
+			}
+			else {
+				return this.element.value
+			}
+		}
+	}
+
 	data(data_name, data_attr=null) {
-		if (!data_attr) {
+		if (is_null(data_attr)) {
 			return this.element.getAttribute('data-' + data_name)
 		}
 		else {
@@ -170,8 +219,8 @@ class EnhancedElement {
 		}
 	}
 
-	add_event(type, handler) {
-		this.element.addEventListener(type, handler)
+	add_event(type, handler, options=null) {
+		this.element.addEventListener(type, handler, options)
 		return this
 	}
 
@@ -181,7 +230,11 @@ class EnhancedElement {
 	}
 
 	click(handler) {
-		this.add_event('click', handler)
+		let url
+		if (this.data('url')) {
+			url = this.data('url')
+		}
+		this.add_event('click', handler.bind(this, url))
 		return this
 	}
 
@@ -201,8 +254,16 @@ class EnhancedElement {
 	}
 }
 
+function is_enhanced_element(obj) {
+	return obj instanceof EnhancedElement
+}
+
 class EnhancedElements {
 	constructor(dom_elements) {
+		if (!dom_elements) {
+			console.error('dom_elements was empty')
+			return
+		}
 		this.elements = dom_elements
 		this.i = 0
 	}
@@ -229,9 +290,15 @@ class EnhancedElements {
 		}
 	}
 
-	length() {
+	get length() {
 		return this.elements.length
 	}
+
+	item(i=0) {
+		return this.elements.item(i)
+	}
+
+	push() {}  // TODO: impliment
 
 	hide() {
 		this.add_class('hidden')
@@ -280,7 +347,7 @@ class EnhancedElements {
 	}
 
 	text(new_text=null, seperator=' ') {
-		if (new_text) {
+		if (!is_null(new_text)) {
 			for (let element of this.elements) {
 				element.innerText = new_text
 			}
@@ -295,7 +362,7 @@ class EnhancedElements {
 	}
 
 	html(new_html=null) {
-		if (new_html) {
+		if (!is_null(new_html)) {
 			for (let element of this.elements) {
 				element.innerHTML = new_html
 			}
@@ -309,8 +376,39 @@ class EnhancedElements {
 		}
 	}
 
+	val(new_val=null) {
+		if (!is_null(new_val)) {
+			for (let element of this.elements) {
+				if (element.tagName === 'select') {
+					if (is_number(new_val)) {
+						element.selectedIndex = new_val
+					}
+					else {
+						for (let [x, opt] of element.options.entries()) {
+							if (opt.value === new_val) {
+								element.selectedIndex = x
+								break
+							}
+						}
+					}
+				}
+				else {
+					element.value = new_val
+				}
+			}
+		}
+		else {
+			if (this.elements.item(0).tagName === 'select') {
+				return this.elements.item(0).options[this.elements.item(0).selectedIndex].value
+			}
+			else {
+				return this.elements.item(0).value
+			}
+		}
+	}
+
 	data(data_name, data_attr=null) {
-		if (!data_attr) {
+		if (is_null(data_attr)) {
 			return this.elements.item(0).getAttribute('data-' + data_name)
 		}
 		else {
@@ -323,7 +421,12 @@ class EnhancedElements {
 
 	add_event(type, handler) {
 		for (let element of this.elements) {
-			element.addEventListener(type, handler)
+			let url
+			let eelement = $(element)
+			if (eelement.data('url')) {
+				url = eelement.data('url')
+			}
+			element.addEventListener(type, handler.bind(element, url))
 		}
 		return this
 	}
@@ -361,7 +464,15 @@ class EnhancedElements {
 	}
 }
 
-function find_element(identifier, parent=document, index = 0) {
+function is_enhanced_elements(obj) {
+	return obj instanceof EnhancedElements
+}
+
+function is_enhanced(obj) {
+	return is_enhanced_element(obj) || is_enhanced_elements(obj)
+}
+
+function find_element(identifier, parent=document, index=0) {
 	let first_char = identifier.slice(0, 1)
 
 	if (first_char === '#') {
@@ -404,6 +515,9 @@ function enhance_element(obj) {
 			res = find_elements(obj)
 		}
 	}
+	else if (is_enhanced(obj)) {
+		res = obj
+	}
 	return res
 }
 
@@ -411,6 +525,15 @@ let $ = enhance_element
 
 function cls(...classes) {
 	return {class: classes.join(' ')}
+}
+
+function if_near_bottom(e, threshold) {
+	e = $(e).item(0)
+	let r = Math.abs(e.scrollTop - (e.scrollHeight - e.offsetHeight))
+	if (r === 0) {
+		return true
+	}
+	return Math.log10(r) <= threshold
 }
 
 function prepend_to_element(element, str) {
@@ -478,14 +601,14 @@ function data(element, data_name, data_attr=null) {
 
 let print = console.log.bind(console);
 
-function ajax(url, type='GET', data=null, responce_type='text', callback=null) {
+function ajax({url, type='GET', data=null, responce_type='text', complete=null}={}) {
 	let httpRequest = new XMLHttpRequest()
 
 	if (!httpRequest) {
 		alert('Giving up :( Cannot create an XMLHTTP instance')
 		return false
 	}
-	if (is_function(callback)) {
+	if (is_function(complete)) {
 		httpRequest.onreadystatechange = function() {
 			if (httpRequest.readyState === XMLHttpRequest.DONE) {
 				if (httpRequest.status === 200) {
@@ -493,11 +616,47 @@ function ajax(url, type='GET', data=null, responce_type='text', callback=null) {
 					if (responce_type === 'json') {
 						resp = JSON.parse(resp)
 					}
-					callback(resp)
+					complete(resp)
 				}
 			}
 		}
 	}
 	httpRequest.open(type, url)
 	httpRequest.send()
+}
+
+function websocket({url, on_message=null, on_open=null, on_close=null, on_error=null}={}) {
+	url = 'wss://' + window.location.host + '/' + url
+	let conn = new WebSocket(url)
+
+	window.onunload = function() {
+		conn.close()
+	}
+
+	if (is_function(on_message)) {
+		conn.onmessage = on_message
+	}
+
+	conn.onopen = function(evt) {
+		print('opened WebSocket ' + url)
+		if (is_function(on_open)) {
+			on_open(evt)
+		}
+	}
+
+	conn.onclose = function(evt) {
+		print('closing WebSocket ' + url)
+		if (is_function(on_close)) {
+			on_close(evt)
+		}
+	}
+
+	conn.onerror = function(evt) {
+		print('error on WebSocket ' + url)
+		if (is_function(on_error)) {
+			on_error(evt)
+		}
+	}
+
+	return conn
 }

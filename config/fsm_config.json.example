@@ -1,7 +1,7 @@
+//if copying this file you must remove all comments (lines starting with //)
+// TODO: comment this file once the shape has been finalized
 {
-	"factorio_root_path": "",
-	"save_file": "",
-	"web_admin_host": "0.0.0.0",
+	"factorio_instances": {},
 	"web_admin_port": 9876,
 	"web_admin_users": []
 }

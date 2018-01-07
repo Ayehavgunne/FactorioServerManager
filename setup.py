@@ -45,7 +45,7 @@ setup(
 		'Topic :: Internet :: WWW/HTTP'
 	],
 	entry_points={
-		'console_scripts': ['fsm = {}.start:main'.format(package_name)]
+		'console_scripts': ['fsm = {}.fsm_manager:run'.format(package_name)]
 	},
-	install_requires=['cherrypy', 'prompt_toolkit', 'psutil', 'humanize']
+	install_requires=['cherrypy', 'prompt_toolkit', 'psutil', 'humanize', 'tqdm', 'ws4py']
 )
