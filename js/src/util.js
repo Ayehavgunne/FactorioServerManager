@@ -26,6 +26,10 @@ function is_HTMLCollection(val) {
 	return val instanceof HTMLCollection
 }
 
+function is_bool(val) {
+	return typeof val === typeof true
+}
+
 function is_number(val) {
 	return val instanceof Number
 }
@@ -38,7 +42,13 @@ function is_object(val) {
 	if (val === null) {
 		return false
 	}
-	return ((typeof val === 'function') || (typeof val === 'object'));
+	if (is_array(val)) {
+		return false
+	}
+	if (is_function(val)) {
+		return false
+	}
+	return typeof val === 'object'
 }
 
 function is_undef(obj) {
@@ -122,6 +132,10 @@ class EnhancedElement {
 
 	find_all(identifier, index=0) {
 		return find_elements(identifier, this.element, index)
+	}
+
+	length() {
+		return 1
 	}
 
 	item() {
@@ -209,6 +223,21 @@ class EnhancedElement {
 		}
 	}
 
+	checked(val) {
+		this.element.checked = val
+		return this
+	}
+
+	attr(attribute, value=null) {
+		if (!is_null(value)) {
+			this.element.setAttribute(attribute, value)
+		}
+		else {
+			return this.element.getAttribute(attribute)
+		}
+		return this
+	}
+
 	data(data_name, data_attr=null) {
 		if (is_null(data_attr)) {
 			return this.element.getAttribute('data-' + data_name)
@@ -290,7 +319,7 @@ class EnhancedElements {
 		}
 	}
 
-	get length() {
+	length() {
 		return this.elements.length
 	}
 
@@ -359,6 +388,7 @@ class EnhancedElements {
 			}
 			return combined_text
 		}
+		return this
 	}
 
 	html(new_html=null) {
@@ -374,6 +404,7 @@ class EnhancedElements {
 			}
 			return combined_html
 		}
+		return this
 	}
 
 	val(new_val=null) {
@@ -405,6 +436,26 @@ class EnhancedElements {
 				return this.elements.item(0).value
 			}
 		}
+		return this
+	}
+
+	checked(val) {
+		for (let element of this.elements) {
+			element.checked = val
+		}
+		return this
+	}
+
+	attr(attribute, value = null) {
+		if (!is_null(value)) {
+			for (let element of this.elements) {
+				element.setAttribute(attribute, value)
+			}
+		}
+		else {
+			return this.elements.item(0).getAttribute(attribute)
+		}
+		return this
 	}
 
 	data(data_name, data_attr=null) {
@@ -415,8 +466,8 @@ class EnhancedElements {
 			for (let element of this.elements) {
 				element.setAttribute('data-' + data_name, data_attr)
 			}
-			return this
 		}
+		return this
 	}
 
 	add_event(type, handler) {
@@ -490,11 +541,31 @@ function find_elements(identifier, parent=document) {
 		return new EnhancedElement(parent.getElementById(identifier.slice(1)))
 	}
 	else if (first_char === '.') {
-		return new EnhancedElements(parent.getElementsByClassName(identifier.slice(1)))
+		let elements = parent.getElementsByClassName(identifier.slice(1))
+		if (elements.length === 1) {
+			return new EnhancedElement(elements.item(0))
+		}
+		else {
+			return new EnhancedElements(elements)
+		}
+	}
+	else if (identifier.indexOf('[') > -1 && identifier.indexOf(']') > -1) {
+		let elements = parent.querySelectorAll(identifier)
+		if (elements.length === 1) {
+			return new EnhancedElement(elements.item(0))
+		}
+		else {
+			return new EnhancedElements(elements)
+		}
 	}
 	else {
-		let elems = parent.getElementsByTagName(identifier)
-		return new EnhancedElements(elems)
+		let elements = parent.getElementsByTagName(identifier)
+		if (elements.length === 1) {
+			return new EnhancedElement(elements.item(0))
+		}
+		else {
+			return new EnhancedElements(elements)
+		}
 	}
 }
 

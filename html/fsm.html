@@ -34,38 +34,151 @@
 		</nav>
 		<main>
 			<section id="status_sec">
-				<div>Current Version: <span id="current_version"></span></div>
-				<div>
-					<span id="game_status"></span>&nbsp;
-					<span id="game_pid"></span>&nbsp;
-					<span id="game_cpu"></span>&nbsp;
-					<span id="game_mem"></span>&nbsp;
-					<span id="total_mem"></span>&nbsp;
-					<span id="available_mem"></span>
+				<div id="charts">
+					<div id="game_cpu" class="chart_box"></div>
+					<div id="game_mem" class="hidden chart_box"></div>
+					<div id="available_mem" class="hidden chart_box"></div>
+					<div id="game_cpu_tab" class="chart_tab selected_tab">CPU&nbsp;<span id="cpu_text"></span></div>
+					<div id="game_mem_tab" class="chart_tab">Memory&nbsp;<span id="memory_text"></span></div>
+					<div id="available_mem_tab" class="chart_tab">Available Memory&nbsp;<span id="avail_memory_text"></span>
+					</div>
 				</div>
-				<button id="start_my_game" class="action" data-url="factorio/`current_game`/start">
-					Start <span class="game_name"></span>
-				</button>
-				<button id="stop_my_game" class="action" data-url="factorio/`current_game`/stop">
-					Stop <span class="game_name"></span>
-				</button>
-				<button id="status_my_game" class="action" data-url="factorio/`current_game`/status">
-					<span class="game_name"></span> Status
-				</button>
-				<button id="check_for_update" data-url="factorio/`current_game`/check_for_update">
-					Check for Updates
-				</button>
-				<div id="update_available" class="hidden">
-					Version <span id="update_version"></span> is available!
-					<button id="get_update" data-url="factorio/`current_game`/update?version=`version`">Update Now</button>
+				<div id="status_buttons">
+					<button id="start_my_game" class="action" data-url="factorio/`current_game`/start">
+						Start <span class="game_name"></span>
+					</button>
+					<button id="stop_my_game" class="action" data-url="factorio/`current_game`/stop">
+						Stop <span class="game_name"></span>
+					</button>
+					<button id="check_for_update" data-url="factorio/`current_game`/check_for_update">Check for Updates</button>
+					<span id="update_available" class="hidden">
+						Version <span id="update_version"></span> is available!
+						<button id="get_update" data-url="factorio/`current_game`/update?version=`version`">Update Now</button>
+					</span>
+					<span id="current_version">Current Version</span>
+					<span id="game_status">Status</span>
+					<span id="total_mem">Total System Memory</span>
 				</div>
 			</section>
 			<section id="console_sec" class="hidden">
 				<div id="console_box"></div>
 			</section>
 			<section id="mods_sec" class="hidden">TODO mods</section>
-			<section id="config_sec" class="hidden">TODO configs</section>
+			<section id="config_sec" class="hidden">
+				<form id="server_configs_form">
+					<div class="column">
+						<label data-comment="_comment_afk_autokick_interval" id="afk_kick_label">
+							AFK AutoKick Interval
+							<input data-field="afk_autokick_interval" type="number">
+						</label>
+						<label data-comment="_comment_autosave_interval" id="auto_save_label">
+							Auto Save Interval
+							<input data-field="autosave_interval" type="number">
+						</label>
+						<label data-comment="_comment_autosave_slots" id="auto_save_slots_label">
+							Auto Save Interval
+							<input data-field="autosave_slots" type="number">
+						</label>
+						<label data-comment="_comment_max_players" id="max_players_label">
+							Max Players
+							<input data-field="max_players" type="number">
+						</label>
+						<label data-comment="_comment_max_upload_in_kilobytes_per_second" id="max_upload_label">
+							Max Upload in Kilobytes Per Second
+							<input data-field="max_upload_in_kilobytes_per_second" type="number">
+						</label>
+						<label data-comment="_comment_minimum_latency_in_ticks" id="max_tick_latency_label">
+							Max Latency in Ticks
+							<input data-field="minimum_latency_in_ticks" type="number">
+						</label>
+						<label title="Description of the game that will appear in the listing." id="description_label">
+							Game Description
+							<input data-field="description" type="text" autocomplete="off">
+						</label>
+						<label title="Fill to require this password to enter game. Share only with people you want to be able to connect to game." id="game_password_label">
+							Game Password
+							<input data-field="game_password" type="text" autocomplete="off">
+						</label>
+						<label title="Name of the game as it will appear in the game listing." id="name_label">
+							Game Name
+							<input data-field="name" type="text" autocomplete="off">
+						</label>
+						<label title="Username to login to Factorio Website." id="username_label">
+							Factorio Login Username
+							<input data-field="username" type="text" autocomplete="off">
+						</label>
+						<label title="Password to login to Factorio Website. Not recomended, use token instead if possible." id="password_label">
+							Factorio Login Password
+							<input data-field="password" type="text" autocomplete="off">
+						</label>
+						<label data-comment="_comment_token" id="token_label">
+							Token
+							<input data-field="token" type="text" autocomplete="off">
+						</label>
+						<label data-comment="_comment_allow_commands" id="allow_commands_label">
+							Allow Commands
+							<select data-field="allow_commands">
+								<option value="true">True</option>
+								<option value="false">False</option>
+								<option value="admins-only">Admins Only</option>
+							</select>
+						</label>
+					</div>
+					<div class="column">
+						<div class="label">
+							<div data-comment="_comment_admins" id="admin_label">Admins</div>
+							<div id="admin_list"></div>
+							<div id="add_admins">Add</div>
+						</div>
+						<div class="label">
+							<div title="Tags to add to your game" id="tag_label">Tags</div>
+							<div id="tag_list"></div>
+							<div id="add_tags">Add</div>
+						</div>
+						<label data-comment="_comment_auto_pause" id="auto_pause_label">
+							Auto Pause
+							<input data-field="auto_pause" type="checkbox">
+						</label>
+						<label data-comment="_comment_autosave_only_on_server" id="save_on_server_label">
+							Auto Save Only on Server
+							<input data-field="autosave_only_on_server" type="checkbox">
+						</label>
+						<label data-comment="_comment_ignore_player_limit_for_returning_players" id="ignore_player_limit_label">
+							Ignore Player Limit for Returning Players
+							<input data-field="ignore_player_limit_for_returning_players" type="checkbox">
+						</label>
+						<label data-comment="_comment_non_blocking_saving" id="non_block_save_label">
+							Non-Blocking Saving
+							<input data-field="non_blocking_saving" type="checkbox">
+						</label>
+						<label id="only_admins_pause_label">
+							Only Admins Can Pause Game
+							<input data-field="only_admins_can_pause_the_game" type="checkbox">
+						</label>
+						<label data-comment="_comment_require_user_verification" id="verification_label">
+							Require User Verification
+							<input data-field="require_user_verification" type="checkbox">
+						</label>
+						<div data-comment="_comment_visibility" id="visibility_label">
+							Visibility
+							<label id="lan_label">
+								Lan
+								<input data-field="lan" type="checkbox">
+							</label>
+							<label id="public_label">
+								Public
+								<input data-field="public" type="checkbox">
+							</label>
+						</div>
+					</div>
+					<input type="submit" value="Save" id="save_server_config">
+				</form>
+			</section>
 		</main>
-		<div id="overlay" class="hidden"><div id="overlay_cell"><div id="overlay_msg"></div></div></div>
+		<div id="overlay" class="hidden">
+			<div id="overlay_cell">
+				<div id="overlay_msg"></div>
+			</div>
+		</div>
 	</body>
 </html>

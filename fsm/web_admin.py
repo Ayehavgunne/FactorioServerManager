@@ -114,6 +114,7 @@ class CustomWS(WebSocket):
 
 	def closed(self, code, reason=None):
 		self.broadcast = False
+		log.debug('{} Socket was closed'.format(self.__class__.__name__.replace('WSHandler', '')))
 
 	def received_message(self, message):
 		log.info(message)
@@ -181,10 +182,6 @@ class FactorioDispatch(object):
 		instances[name].stop()
 
 	@cherrypy.expose()
-	def status(self, name):
-		return instances[name].status()
-
-	@cherrypy.expose()
 	def get_current_version(self, name):
 		return instances[name].version
 
@@ -209,6 +206,10 @@ class FactorioDispatch(object):
 		log.info(version)
 		instances[name].download_update(version)
 		instances[name].apply_update()
+
+	@cherrypy.expose()
+	def server_config(self, name):
+		return json.dumps(instances[name].server_config, indent=4, separators=(',', ': '))
 
 
 class WebAdmin(object):

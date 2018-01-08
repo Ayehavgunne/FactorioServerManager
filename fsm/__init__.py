@@ -75,4 +75,5 @@ def save_settings(settings):
 		fsm_config_file.write('\n')
 
 
-TOTAL_MEMORY = virtual_memory().total
+VIRTUAL_MEMORY = virtual_memory()
+TOTAL_MEMORY = VIRTUAL_MEMORY.total

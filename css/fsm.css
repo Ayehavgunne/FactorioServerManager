@@ -6,10 +6,14 @@ html, body {
 	height:100%;
 	background-color:#2B2B2B;
 	color:white;
+	box-sizing:border-box;
+}
+*, *:before, *:after {
+	box-sizing:inherit;
 }
 header {
 	background-color:#0E4000;
-	height:35px;
+	height:47px;
 	padding:5px 10px;
 	line-height:30px;
 }
@@ -22,6 +26,17 @@ header {
 	margin-left:20px;
 	float:left;
 }
+input {
+	border:1px solid #EAFFE2;
+	background-color:transparent;
+	color:white;
+	padding:2px;
+	text-align:right;
+}
+input[type="checkbox"] {
+	border:1px solid #EAFFE2;
+	background-color:transparent;
+}
 select {
 	border:1px solid #EAFFE2;
 	background-color:transparent;
@@ -29,7 +44,7 @@ select {
 	padding:2px;
 	cursor:pointer;
 }
-button:hover, select:hover, #logout_button:hover, nav ul li:hover {
+button:hover, select:hover, #logout_button:hover, nav ul li:hover, .chart_tab:hover, #save_server_config:hover, input:hover {
 	background-color:#30A800;
 	text-shadow:2px 2px #000000;
 }
@@ -49,7 +64,7 @@ select option {
 	float:right;
 	margin:0;
 }
-#logout_button {
+#logout_button, #save_server_config {
 	background-color:transparent;
 	border:1px solid #EAFFE2;
 	color:white;
@@ -60,7 +75,7 @@ select option {
 nav {
 	background-color:#101011;
 	float:left;
-	height:calc(100% - 60px);
+	height:calc(100% - 47px);
 	width:165px;
 	padding-top:15px;
 	border-right:1px solid #8C8C8C;
@@ -75,14 +90,18 @@ nav ul li {
 	font-size:15px;
 	cursor:pointer;
 }
-.selected_nav {
+.selected_nav, .selected_tab {
 	background-color:#1D6600;
 }
 main {
 	float:right;
-	width:calc(100% - 186px);
-	height:calc(100% - 65px);
+	width:calc(100% - 165px);
+	height:calc(100% - 47px);
+}
+section {
 	padding:10px;
+	height:100%;
+	overflow:auto;
 }
 .hidden {
 	display:none !important;
@@ -121,13 +140,120 @@ button {
 	height:100%;
 }
 #console_box {
-	border:1px solid white;
+	border:1px solid #EAFFE2;
 	overflow-x:auto;
 }
 .console_line {
-	border-bottom:1px dotted white;
+	border-bottom:1px dotted #EAFFE2;
 	padding:4px;
 }
 .console_line:last-child {
 	border-bottom:0;
+}
+#status_sec {
+	height:100%;
+	position:relative;
+}
+#charts {
+	margin:auto;
+	width:80%;
+	height:240px;
+	clear:left;
+}
+#game_status, #total_mem, #current_version {
+	margin-left:10px;
+}
+.chart_box {
+	height:200px;
+	border:1px solid #EAFFE2;
+	position:relative;
+}
+.chart_tab {
+	border-bottom:1px solid #EAFFE2;
+	border-left:1px solid #EAFFE2;
+	border-right:1px solid #EAFFE2;
+	float:left;
+	padding:8px;
+	box-sizing:border-box;
+	width:calc(100% / 3);
+	cursor:pointer;
+}
+#game_mem_tab {
+	border-left:0;
+	border-right:0;
+}
+.history_bar {
+	width:1%;
+	background-color:#1D6600;
+	position:absolute;
+	bottom:0;
+}
+.bold {
+	font-weight:bold;
+}
+#status_buttons {
+	position:absolute;
+	bottom:0;
+}
+#config_sec label, #config_sec .label {
+	display:block;
+	margin-bottom:5px;
+	padding-bottom:5px;
+	padding-left:5px;
+	padding-right:5px;
+	height:48px;
+	border-bottom:1px solid #EAFFE2;
+}
+#config_sec label:last-child {
+	border-bottom:0;
+}
+#config_sec input[type="text"], #config_sec input[type="number"], #config_sec select {
+	display:block;
+	margin-left:40px;
+	width:calc(100% - 40px);
+}
+#config_sec input[type="checkbox"] {
+	float:right;
+	margin-top:30px;
+}
+#add_tags, #add_admins {
+	cursor:pointer;
+	float:right;
+}
+#admin_list, #tag_list {
+	margin-left:5px;
+	margin-right:10px;
+	float:left;
+}
+#visibility_label {
+	margin-left:10px;
+}
+#visibility_label label {
+	margin-left:15px;
+	height:27px;
+}
+#visibility_label input {
+	margin-top:10px !important;
+}
+.column {
+	float:left;
+}
+.column:first-of-type {
+	margin-right:20px;
+}
+#save_server_config {
+	clear:left;
+	float:left;
+}
+.list_item {
+	margin-left:5px;
+	float:left;
+	border:1px solid #EAFFE2;
+	padding:0 1px 2px 1px;
+	border-radius:4px;
+}
+.remove {
+	margin-left:3px;
+	float:right;
+	cursor:pointer;
 }

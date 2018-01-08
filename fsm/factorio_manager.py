@@ -1,26 +1,26 @@
 import json
 from datetime import datetime
 from time import sleep
-from queue import Queue
 from urllib import parse
 from urllib import request
 from pathlib import Path
 from subprocess import Popen
 from subprocess import PIPE
+from collections import deque
 from configparser import ConfigParser
 
 from psutil import Process
 from psutil import NoSuchProcess
-from psutil import virtual_memory
 from humanize import naturalsize
 
 from fsm import OS_WIN
 from fsm import TOTAL_MEMORY
-from fsm.util import TqdmUpTo
-from fsm.util import run_in_thread
+from fsm import VIRTUAL_MEMORY
 from fsm import app_settings
 from fsm import log
 from fsm import make_log
+from fsm.util import TqdmUpTo
+from fsm.util import run_in_thread
 
 
 # TODO Need to account for Steam in some of these paths
@@ -33,18 +33,18 @@ class FactorioManager(object):
 		self.process = None
 		self.root_path = Path(root_path)
 		self.log = make_log('{}_factorio'.format(name))
+		self.update_available = False
 		self._ps_proc = None
-		self._virtual_mem = virtual_memory()
+		self._virtual_mem = VIRTUAL_MEMORY
 		self._is_steam = is_steam
 		self._player_data = None
 		self._config = None
 		self._server_config = None
 		self._version_info = None
 		self._available_versions = None
-		self.update_available = False
 		self._temp_update = None
-		self._log_queue = Queue(maxsize=20)
-		self._status_queue = Queue(maxsize=40)
+		self._log_queue = deque(maxlen=20)
+		self._status_history = deque(maxlen=50)
 
 	@property
 	def version(self):
@@ -178,7 +178,7 @@ class FactorioManager(object):
 		if self.build_platform[-2:] == '64':
 			return '64'
 		else:
-			return '32'  # I don't have a 32 bit system anymore so I wasn't sure what factorio would respond with
+			return '32'  # I don't have any 32 bit systems so I wasn't sure what factorio would respond with
 
 	@property
 	def core_str(self):
@@ -211,19 +211,19 @@ class FactorioManager(object):
 			try:
 				data = {
 					'status': self._ps_proc.status(),
-					'pid': self.process.pid,
 					'cpu': self._ps_proc.cpu_percent(interval=2),
 					'mem': naturalsize(self._ps_proc.memory_info().rss),
+					'mem_raw': self._ps_proc.memory_info().rss,
+					'available_mem': naturalsize(self._virtual_mem.available),
+					'available_mem_raw': self._virtual_mem.available,
 					'total_mem': naturalsize(TOTAL_MEMORY),
-					'available_mem': naturalsize(self._virtual_mem.available)
+					'total_mem_raw': TOTAL_MEMORY,
 				}
-			except NoSuchProcess:
+			except (NoSuchProcess, AttributeError):
 				log.warn('Factorio Process {} does not exist anymore'.format(self.name))
 				return
-			if self._status_queue.full():
-				self._status_queue.get()
-			self._status_queue.put(data)
-			return data
+			self._status_history.appendleft(data)
+			return list(self._status_history)
 
 	@run_in_thread
 	def start(self):
@@ -246,12 +246,11 @@ class FactorioManager(object):
 		while True:
 			std_out = self.process.stdout.readline()
 			if std_out:
-				if self._log_queue.full():
-					self._log_queue.get()
-				self._log_queue.put('{} {}: {}'.format(
+				std_out = std_out.decode()
+				self._log_queue.append('{} {}: {}'.format(
 					datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
 					self.name.upper(),
-					std_out.decode().replace('\n', '')
+					std_out.replace('\n', '')
 				))
 				self.log.info(std_out)
 			else:
@@ -262,9 +261,8 @@ class FactorioManager(object):
 				break
 
 	def get_log_line(self):
-		if not self._log_queue.empty():
-			line = self._log_queue.get_nowait()
-			return line
+		if len(self._log_queue):
+			return self._log_queue.pop()
 		else:
 			return
 
@@ -274,6 +272,7 @@ class FactorioManager(object):
 		if self.process:
 			self.process.terminate()
 			self.process = None
+			self._ps_proc = None
 
 	@run_in_thread
 	def kill(self):
@@ -281,6 +280,7 @@ class FactorioManager(object):
 		if self.process:
 			self.process.kill()
 			self.process = None
+			self._ps_proc = None
 
 	@run_in_thread
 	def send_command(self, command):
