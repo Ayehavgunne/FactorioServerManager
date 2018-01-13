@@ -11,6 +11,7 @@
 		<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#fc6b1a">
 		<meta name="theme-color" content="#f05b1b">
 		<link href="/css/fsm.css" rel="stylesheet" type="text/css">
+		<script src="/js/polyfill.min.js" type="text/javascript"></script>
 		<script src="/js/util.js" type="text/javascript"></script>
 		<script src="/js/fsm.js" type="text/javascript"></script>
 	</head>
@@ -44,10 +45,10 @@
 					</div>
 				</div>
 				<div id="status_buttons">
-					<button id="start_my_game" class="action" data-url="factorio/`current_game`/start">
+					<button id="start_game" class="action" data-url="factorio/`current_game`/start">
 						Start <span class="game_name"></span>
 					</button>
-					<button id="stop_my_game" class="action" data-url="factorio/`current_game`/stop">
+					<button id="stop_game" class="action" data-url="factorio/`current_game`/stop">
 						Stop <span class="game_name"></span>
 					</button>
 					<button id="check_for_update" data-url="factorio/`current_game`/check_for_update">Check for Updates</button>
@@ -65,7 +66,7 @@
 			</section>
 			<section id="mods_sec" class="hidden">TODO mods</section>
 			<section id="config_sec" class="hidden">
-				<form id="server_configs_form">
+				<div id="server_configs_form">
 					<div class="column">
 						<label data-comment="_comment_afk_autokick_interval" id="afk_kick_label">
 							AFK AutoKick Interval
@@ -126,14 +127,14 @@
 					</div>
 					<div class="column">
 						<div class="label">
-							<div data-comment="_comment_admins" id="admin_label">Admins</div>
-							<div id="admin_list"></div>
+							<div data-comment="_comment_admins" id="admins_label">Admins</div>
 							<div id="add_admins">Add</div>
+							<div id="admins_list"></div>
 						</div>
 						<div class="label">
-							<div title="Tags to add to your game" id="tag_label">Tags</div>
-							<div id="tag_list"></div>
+							<div title="Tags to add to your game" id="tags_label">Tags</div>
 							<div id="add_tags">Add</div>
+							<div id="tags_list"></div>
 						</div>
 						<label data-comment="_comment_auto_pause" id="auto_pause_label">
 							Auto Pause
@@ -171,8 +172,8 @@
 							</label>
 						</div>
 					</div>
-					<input type="submit" value="Save" id="save_server_config">
-				</form>
+					<button id="save_server_config">Save</button>
+				</div>
 			</section>
 		</main>
 		<div id="overlay" class="hidden">

@@ -208,8 +208,16 @@ class FactorioDispatch(object):
 		instances[name].apply_update()
 
 	@cherrypy.expose()
+	@cherrypy.tools.json_out()
 	def server_config(self, name):
-		return json.dumps(instances[name].server_config, indent=4, separators=(',', ': '))
+		return instances[name].server_config
+
+	@cherrypy.expose()
+	@cherrypy.tools.json_in()
+	def update_server_configs(self, name):
+		configs = cherrypy.request.json
+		instances[name].server_config = configs
+
 
 
 class WebAdmin(object):

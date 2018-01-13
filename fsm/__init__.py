@@ -66,8 +66,8 @@ app_settings = AppSettings()
 from fsm import util
 
 
-def save_settings(settings):
-	with config_path.open('r+') as fsm_config_file:
+def save_settings(settings, conf_path=config_path):
+	with conf_path.open('r+') as fsm_config_file:
 		settings = util.merge_two_dicts(settings, json.load(fsm_config_file))
 		fsm_config_file.seek(0)
 		fsm_config_file.truncate()

@@ -5,14 +5,26 @@ on_load(function() {
 
 	ajax({
 		url: url_apply('factorio/`current_game`/updates_available'),
+		responce_type: 'json',
 		complete: function(result) {
-			result = JSON.parse(result)
+			// result = JSON.parse(result)
 			update_available(result)
 		}
 	})
 
 	let factorio_ws = factorio_socket()
 	let log_ws
+
+	$('#overlay').click(function(e) {
+		if (this !== e.target && $('#overlay_cell').element !== e.target) {
+			return
+		}
+		$('#overlay').hide()
+		$('#overlay_msg').html('')
+	})
+
+	apply_add_button($('#add_admins'))
+	apply_add_button($('#add_tags'))
 
 	$('.game_name').text(current_game_name)
 	get_current_verison()
@@ -42,7 +54,7 @@ on_load(function() {
 		$(this).add_class('selected_tab')
 	})
 
-	$('#start_my_game').click(function() {
+	$('#start_game').click(function() {
 		$('#game_status').text('Status: Starting')
 	})
 
@@ -57,10 +69,8 @@ on_load(function() {
 	$('#config_nav').click(function() {
 		ajax({
 			url: url_apply('factorio/`current_game`/server_config'),
-			complete: function(config) {
-				config = JSON.parse(config)
-				apply_configs_to_form(config)
-			}
+			responce_type: 'json',
+			complete: apply_configs_to_form
 		})
 	})
 
@@ -89,8 +99,10 @@ on_load(function() {
 	$('#check_for_update').click(function(url) {
 		ajax({
 			url: url_apply(url),
+			responce_type: 'json',
 			complete: function(result) {
-				update_available(JSON.parse(result))
+				// update_available(JSON.parse(result))
+				update_available(result)
 			}
 		})
 	})
@@ -103,6 +115,8 @@ on_load(function() {
 		}
 	})
 
+	$('#save_server_config').click(update_server_configs)
+
 	function url_apply(url, replacements={'current_game': current_game_name}) {
 		for (let item in replacements) {
 			url = url.replace('`' + item + '`', replacements[item])
@@ -111,7 +125,11 @@ on_load(function() {
 	}
 
 	function apply_configs_to_form(configs) {
-		for (let key in configs) {
+		// configs = JSON.parse(configs)
+		$('#admins_list').html('')
+		$('#tags_list').html('')
+
+		for (let key in configs) { // This could be refactored to be recursive but... this works for now
 			if (configs.hasOwnProperty(key)) {
 				let value = configs[key]
 				if (key.startsWith('_comment_')) {
@@ -137,18 +155,13 @@ on_load(function() {
 					$('[data-field="public"]').checked(value['public'])
 				}
 				else if (key === 'admins' || key === 'tags') {
-					let type = ''
-					if (key === 'admins') {
-						type = 'admin'
-					}
-					else if (key === 'tags') {
-						type = 'tag'
-					}
+					let item_list_container = $('#' + key + '_list')
 					for (let item of value) {
-						$('#' + type + '_list').append(
-							tag('div', item + tag('div', '&times;', {class: 'remove', 'title': 'Remove'}), {class: type + '_list_item list_item'})
-						)
+						create_list_item(item_list_container, item, key)
 					}
+				}
+				else if (key === 'allow_commands') {
+					$('[data-field="' + key + '"]').val(value)
 				}
 				else {
 					let field = $('[data-field="' + key + '"]')
@@ -309,5 +322,161 @@ on_load(function() {
 			factorio_ws.close()
 			factorio_ws = null
 		}
+	}
+
+	function update_server_configs() {
+		let form = $('#server_configs_form')
+		let configs = {}
+		let select = form.find('select')
+		configs[select.data('field')] = select.val()
+		for (let list_item of form.find('.list_item')) {
+			let type = list_item.data('type')
+			if (!(type in configs)) {
+				configs[type] = []
+			}
+			configs[type].push(list_item.base_text())
+		}
+		for (let input of form.find('input')) {
+			let field = input.data('field')
+			let field_type = input.attr('type')
+			if (field === 'lan' || field === 'public') {
+				if (!('visibility' in configs)) {
+					configs['visibility'] = {}
+				}
+				configs['visibility'][field] = input.checked()
+			}
+			else {
+				if (field_type === 'number') {
+					configs[field] = parseInt(input.val())
+				}
+				else if (field_type === 'checkbox') {
+					configs[field] = input.checked()
+				}
+				else {
+					configs[field] = input.val()
+				}
+			}
+		}
+		ajax({
+			url: url_apply('factorio/`current_game`/update_server_configs'),
+			data: configs,
+			type: 'POST'
+		})
+		show_modal({
+			message: 'The the settings have been saved. ' +
+			'For them to take effect the Factorio server must be restarted.<br>' +
+			'Would you like to do that now? ' +
+			'Click outside message box to ignore.',
+			enter: true,
+			done: reset_factorio
+		})
+	}
+
+	function reset_factorio(callback=null) {
+		ajax({
+			url: url_apply($('#stop_game').data('url')),
+			complete: function() {
+				ajax({
+					url: url_apply($('#start_game').data('url')),
+					complete: function() {
+						if (is_function(callback)) {
+							callback()
+						}
+					}
+				})
+			}
+		})
+	}
+
+	function create_list_item(element, text, type) {
+		let list_item_element = string_to_element(tag('div', text, {class: type + '_list_item list_item'}, {type: type}))
+		let remove_button = string_to_element(tag('div', '&times;', {class: 'remove', 'title': 'Remove'}))
+		list_item_element.appendChild(remove_button)
+		$(element).append(list_item_element)
+		apply_remove_button(remove_button)
+	}
+
+	function apply_add_button(element) {
+		let label = $(element).attr('id').replace('add_', '')
+		let list_element = $('#' + label + '_list')
+		function enter_logic (value) {
+			let item_elements = $('.' + label + '_list_item')
+			for (let list_item of item_elements) {
+				let t = list_item.text().replace(list_item.find('.remove').text(), '')
+				if (value === t) {
+					$('#error').show()
+					return
+				}
+			}
+			create_list_item(list_element, value, label)
+			// $('#overlay_msg').html('')
+			// $('#overlay').hide()
+		}
+		function add_button_logic() {
+			show_modal({
+				label: label.title() + ' Entry ',
+				enter: true,
+				input: true,
+				error_msg: 'That entry already exists',
+				done: enter_logic
+			})
+		}
+		$(element).remove_event('click', add_button_logic).click(add_button_logic)
+	}
+
+	function show_modal({label='', message='', enter=false, input=false, error_msg='', done=null}={}) {
+		let label_html = ''
+		let message_html = ''
+		let enter_html = ''
+		let input_html = ''
+		let error_html = ''
+		if (label) {
+			label_html = tag('label', label)
+		}
+		if (message) {
+			message_html = tag('span', message)
+		}
+		if (enter) {
+			enter_html = tag('button', 'Enter', {id: 'enter_button'})
+		}
+		if (input) {
+			input_html = tag('input', {id: 'new_value'})
+		}
+		if (error_msg) {
+			error_html = tag('div', error_msg, {class: 'hidden', id: 'error'})
+		}
+		$('#overlay').show()
+		$('#overlay_msg').append(error_html + message_html + label_html + input_html + '<br>' + enter_html)
+		if (input) {
+			$('#new_value').element.focus()
+		}
+		if (is_function(done)) {
+			$('#enter_button').click(() => {
+				if (input) {
+					done($('#new_value').val())
+				}
+				else {
+					done()
+				}
+				$('#overlay_msg').html('')
+				$('#overlay').hide()
+			})
+			if (input) {
+				$('#new_value').add_event('keyup', (e) => {
+					if (e.keyCode === 13) {
+						done($('#new_value').val())
+						$('#overlay_msg').html('')
+						$('#overlay').hide()
+					}
+				})
+			}
+		}
+	}
+
+	function apply_remove_button(element) {
+		function remove_button_logic() {
+			$(this).parent().remove()
+		}
+		$(element).remove_event('click', remove_button_logic).click(remove_button_logic)
 	}
 })

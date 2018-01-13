@@ -124,14 +124,30 @@ class EnhancedElement {
 			return
 		}
 		this.element = dom_element
+		this.i = 0
 	}
 
-	find(identifier, index=0) {
-		return find_element(identifier, this.element, index)
+	find(identifier) {
+		return find_element(identifier, this.element)
 	}
 
 	find_all(identifier, index=0) {
 		return find_elements(identifier, this.element, index)
+	}
+
+	[Symbol.iterator]() {
+		return {
+			next: () => {
+				if (this.i === 0) {
+					this.i++
+					return {value: new EnhancedElement(this.element), done: false}
+				}
+				else {
+					this.i = 0
+					return {done: true}
+				}
+			}
+		}
 	}
 
 	length() {
@@ -140,6 +156,14 @@ class EnhancedElement {
 
 	item() {
 		return this.element
+	}
+
+	parent() {
+		return new EnhancedElement(this.element.parentNode)
+	}
+
+	remove() {
+		this.element.parentNode.removeChild(this.element)
 	}
 
 	hide() {
@@ -152,13 +176,39 @@ class EnhancedElement {
 		return this
 	}
 
+	filter(identifier) {
+		let array_filter = Array.prototype.filter
+		let filtered
+		if (is_string(identifier)) {
+			filtered = array_filter.call([this.element], function(node) {
+				return !!node.querySelectorAll(identifier).length
+			})
+		}
+		else if (is_function(identifier)) {
+			filtered = array_filter.call([this.element], identifier)
+		}
+		if (filtered.length > 0) {
+			return new EnhancedElement(filtered)
+		}
+	}
+
 	prepend(str) {
-		this.element.insertAdjacentHTML('afterbegin', str)
+		if (is_string(str)) {
+			this.element.insertAdjacentHTML('afterbegin', str)
+		}
+		else if (is_element(str)) {
+			this.element.prepend(str)
+		}
 		return this
 	}
 
 	append(str) {
-		this.element.insertAdjacentHTML('beforeend', str)
+		if (is_string(str)) {
+			this.element.insertAdjacentHTML('beforeend', str)
+		}
+		else if (is_element(str)) {
+			this.element.appendChild(str)
+		}
 		return this
 	}
 
@@ -183,6 +233,16 @@ class EnhancedElement {
 		else {
 			return this.element.innerText
 		}
+	}
+
+	base_text() {
+		return [].reduce.call(
+			this.element.childNodes,
+			function(a, b) {
+				return a + (b.nodeType === 3 ? b.textContent : '')
+			},
+			''
+		)
 	}
 
 	html(new_html=null) {
@@ -223,9 +283,14 @@ class EnhancedElement {
 		}
 	}
 
-	checked(val) {
-		this.element.checked = val
-		return this
+	checked(val=null) {
+		if (is_null(val)) {
+			return this.element.checked
+		}
+		else {
+			this.element.checked = val
+			return this
+		}
 	}
 
 	attr(attribute, value=null) {
@@ -259,11 +324,13 @@ class EnhancedElement {
 	}
 
 	click(handler) {
-		let url
 		if (this.data('url')) {
-			url = this.data('url')
+			let url = this.data('url')
+			this.add_event('click', handler.bind(this, url))
 		}
-		this.add_event('click', handler.bind(this, url))
+		else {
+			this.add_event('click', handler)
+		}
 		return this
 	}
 
@@ -298,18 +365,18 @@ class EnhancedElements {
 	}
 
 	find(identifier, index=0) {
-		return find_element(identifier, this.elements.item(0), index)
+		return find_element(identifier, this.elements.item(index))
 	}
 
 	find_all(identifier, index=0) {
-		return find_elements(identifier, this.elements.item(0), index)
+		return find_elements(identifier, this.elements.item(index))
 	}
 
 	[Symbol.iterator]() {
 		return {
 			next: () => {
-				if (this.i > this.elements.length) {
-					return {value: new EnhancedElement(this.elements[this.i++]), done: false}
+				if (this.i < this.elements.length) {
+					return {value: new EnhancedElement(this.elements.item(this.i++)), done: false}
 				}
 				else {
 					this.i = 0
@@ -324,10 +391,23 @@ class EnhancedElements {
 	}
 
 	item(i=0) {
+		if (i < 0) {
+			i = this.elements.length + i
+		}
 		return this.elements.item(i)
 	}
 
 	push() {}  // TODO: impliment
+
+	parent(index=0) {
+		return new EnhancedElement(this.elements.item(index).parentNode)
+	}
+
+	remove() {
+		for (let element of this.elements) {
+			element.parentNode.removeChild(element)
+		}
+	}
 
 	hide() {
 		this.add_class('hidden')
@@ -339,16 +419,49 @@ class EnhancedElements {
 		return this
 	}
 
+	filter(identifier) {
+		let array_filter = Array.prototype.filter
+		let filtered
+		if (is_string(identifier)) {
+			filtered = array_filter.call(this.elements, function(node) {
+				return !!node.querySelectorAll(identifier).length
+			})
+		}
+		else if (is_function(identifier)) {
+			filtered =  array_filter.call(this.elements, identifier)
+		}
+		if (filtered.length > 1) {
+			return new EnhancedElements(filtered)
+		}
+		else if (filtered.length === 1) {
+			return new EnhancedElement(filtered)
+		}
+	}
+
 	prepend(str) {
-		for (let element of this.elements) {
-			element.insertAdjacentHTML('afterbegin', str)
+		if (is_string(str)) {
+			for (let element of this.elements) {
+				element.insertAdjacentHTML('afterbegin', str)
+			}
+		}
+		else if (is_element(str)) {
+			for (let element of this.elements) {
+				element.prepend(str)
+			}
 		}
 		return this
 	}
 
 	append(str) {
-		for (let element of this.elements) {
-			element.insertAdjacentHTML('beforeend', str)
+		if (is_string(str)) {
+			for (let element of this.elements) {
+				element.insertAdjacentHTML('beforeend', str)
+			}
+		}
+		else if (is_element(str)) {
+			for (let element of this.elements) {
+				element.appendChild(str)
+			}
 		}
 		return this
 	}
@@ -391,6 +504,16 @@ class EnhancedElements {
 		return this
 	}
 
+	base_text(index=0) {
+		return [].reduce.call(
+			this.elements.item(index).childNodes,
+			function(a, b) {
+				return a + (b.nodeType === 3 ? b.textContent : '')
+			},
+			''
+		)
+	}
+
 	html(new_html=null) {
 		if (!is_null(new_html)) {
 			for (let element of this.elements) {
@@ -407,7 +530,7 @@ class EnhancedElements {
 		return this
 	}
 
-	val(new_val=null) {
+	val(new_val=null, index=0) {
 		if (!is_null(new_val)) {
 			for (let element of this.elements) {
 				if (element.tagName === 'select') {
@@ -429,38 +552,43 @@ class EnhancedElements {
 			}
 		}
 		else {
-			if (this.elements.item(0).tagName === 'select') {
-				return this.elements.item(0).options[this.elements.item(0).selectedIndex].value
+			if (this.elements.item(index).tagName === 'select') {
+				return this.elements.item(index).options[this.elements.item(index).selectedIndex].value
 			}
 			else {
-				return this.elements.item(0).value
+				return this.elements.item(index).value
 			}
 		}
 		return this
 	}
 
-	checked(val) {
-		for (let element of this.elements) {
-			element.checked = val
+	checked(val=null, index=0) {
+		if (is_null(val)) {
+			return this.elements.item(index).checked
 		}
-		return this
+		else {
+			for (let element of this.elements) {
+				element.checked = val
+			}
+			return this
+		}
 	}
 
-	attr(attribute, value = null) {
+	attr(attribute, value = null, index=0) {
 		if (!is_null(value)) {
 			for (let element of this.elements) {
 				element.setAttribute(attribute, value)
 			}
 		}
 		else {
-			return this.elements.item(0).getAttribute(attribute)
+			return this.elements.item(index).getAttribute(attribute)
 		}
 		return this
 	}
 
-	data(data_name, data_attr=null) {
+	data(data_name, data_attr=null, index=0) {
 		if (is_null(data_attr)) {
-			return this.elements.item(0).getAttribute('data-' + data_name)
+			return this.elements.item(index).getAttribute('data-' + data_name)
 		}
 		else {
 			for (let element of this.elements) {
@@ -523,14 +651,14 @@ function is_enhanced(obj) {
 	return is_enhanced_element(obj) || is_enhanced_elements(obj)
 }
 
-function find_element(identifier, parent=document, index=0) {
+function find_element(identifier, parent=document) {
 	let first_char = identifier.slice(0, 1)
 
 	if (first_char === '#') {
 		return new EnhancedElement(parent.getElementById(identifier.slice(1)))
 	}
 	else {
-		return find_elements(identifier, parent)[index]
+		return find_elements(identifier, parent)
 	}
 }
 
@@ -661,6 +789,12 @@ function click(element, handler) {
 	add_event(element, 'click', handler)
 }
 
+function string_to_element(str) {
+	let d = document.createElement('div')
+	d.innerHTML = str
+	return d.firstChild
+}
+
 function data(element, data_name, data_attr=null) {
 	if (!data_attr) {
 		return element.getAttribute('data-' + data_name)
@@ -672,7 +806,7 @@ function data(element, data_name, data_attr=null) {
 
 let print = console.log.bind(console);
 
-function ajax({url, type='GET', data=null, responce_type='text', complete=null}={}) {
+function ajax({url, type='GET', data=null, content_type=null, responce_type='text', complete=null}={}) {
 	let httpRequest = new XMLHttpRequest()
 
 	if (!httpRequest) {
@@ -693,7 +827,25 @@ function ajax({url, type='GET', data=null, responce_type='text', complete=null}=
 		}
 	}
 	httpRequest.open(type, url)
-	httpRequest.send()
+	if (is_null(data)) {
+		httpRequest.send()
+	}
+	else {
+		if (is_null(content_type)) {
+			if (is_object(data)) {
+				content_type = 'application/json'
+				data = JSON.stringify(data)
+			}
+			else if (is_string(data)) {
+				content_type = 'text/plain'
+			}
+			else {
+				content_type = 'application/octet-stream'
+			}
+		}
+		httpRequest.setRequestHeader('Content-Type', content_type);
+		httpRequest.send(data)
+	}
 }
 
 function websocket({url, on_message=null, on_open=null, on_close=null, on_error=null}={}) {
@@ -730,4 +882,10 @@ function websocket({url, on_message=null, on_open=null, on_close=null, on_error=
 	}
 
 	return conn
+}
+
+String.prototype.title = function() {
+	return this.replace(/\w\/|\S*/g, function(txt) {
+		return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+	})
 }

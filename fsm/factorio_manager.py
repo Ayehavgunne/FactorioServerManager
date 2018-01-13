@@ -16,9 +16,11 @@ from humanize import naturalsize
 from fsm import OS_WIN
 from fsm import TOTAL_MEMORY
 from fsm import VIRTUAL_MEMORY
+from fsm import save_settings
 from fsm import app_settings
 from fsm import log
 from fsm import make_log
+from fsm.util import merge_two_dicts
 from fsm.util import TqdmUpTo
 from fsm.util import run_in_thread
 
@@ -172,6 +174,11 @@ class FactorioManager(object):
 		if not self._server_config:
 			self._server_config = json.load((self.root_path / 'config' / 'server-settings.json').resolve().open())
 		return self._server_config
+
+	@server_config.setter
+	def server_config(self, config):
+		self._server_config = merge_two_dicts(config, self._server_config)
+		save_settings(self._server_config, (self.root_path / 'config' / 'server-settings.json').resolve())
 
 	@property
 	def bits(self):

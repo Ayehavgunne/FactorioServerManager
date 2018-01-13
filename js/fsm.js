@@ -9,14 +9,26 @@ on_load(function () {
 
 	ajax({
 		url: url_apply('factorio/`current_game`/updates_available'),
+		responce_type: 'json',
 		complete: function complete(result) {
-			result = JSON.parse(result);
+			// result = JSON.parse(result)
 			update_available(result);
 		}
 	});
 
 	var factorio_ws = factorio_socket();
 	var log_ws = void 0;
+
+	$('#overlay').click(function (e) {
+		if (this !== e.target && $('#overlay_cell').element !== e.target) {
+			return;
+		}
+		$('#overlay').hide();
+		$('#overlay_msg').html('');
+	});
+
+	apply_add_button($('#add_admins'));
+	apply_add_button($('#add_tags'));
 
 	$('.game_name').text(current_game_name);
 	get_current_verison();
@@ -46,7 +58,7 @@ on_load(function () {
 		$(this).add_class('selected_tab');
 	});
 
-	$('#start_my_game').click(function () {
+	$('#start_game').click(function () {
 		$('#game_status').text('Status: Starting');
 	});
 
@@ -61,10 +73,8 @@ on_load(function () {
 	$('#config_nav').click(function () {
 		ajax({
 			url: url_apply('factorio/`current_game`/server_config'),
-			complete: function complete(config) {
-				config = JSON.parse(config);
-				apply_configs_to_form(config);
-			}
+			responce_type: 'json',
+			complete: apply_configs_to_form
 		});
 	});
 
@@ -93,8 +103,10 @@ on_load(function () {
 	$('#check_for_update').click(function (url) {
 		ajax({
 			url: url_apply(url),
+			responce_type: 'json',
 			complete: function complete(result) {
-				update_available(JSON.parse(result));
+				// update_available(JSON.parse(result))
+				update_available(result);
 			}
 		});
 	});
@@ -107,6 +119,8 @@ on_load(function () {
 		}
 	});
 
+	$('#save_server_config').click(update_server_configs);
+
 	function url_apply(url) {
 		var replacements = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { 'current_game': current_game_name };
 
@@ -117,7 +131,12 @@ on_load(function () {
 	}
 
 	function apply_configs_to_form(configs) {
+		// configs = JSON.parse(configs)
+		$('#admins_list').html('');
+		$('#tags_list').html('');
+
 		for (var key in configs) {
+			// This could be refactored to be recursive but... this works for now
 			if (configs.hasOwnProperty(key)) {
 				var value = configs[key];
 				if (key.startsWith('_comment_')) {
@@ -162,12 +181,7 @@ on_load(function () {
 					$('[data-field="lan"]').checked(value['lan']);
 					$('[data-field="public"]').checked(value['public']);
 				} else if (key === 'admins' || key === 'tags') {
-					var type = '';
-					if (key === 'admins') {
-						type = 'admin';
-					} else if (key === 'tags') {
-						type = 'tag';
-					}
+					var item_list_container = $('#' + key + '_list');
 					var _iteratorNormalCompletion2 = true;
 					var _didIteratorError2 = false;
 					var _iteratorError2 = undefined;
@@ -176,7 +190,7 @@ on_load(function () {
 						for (var _iterator2 = value[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 							var _item = _step2.value;
 
-							$('#' + type + '_list').append(tag('div', _item + tag('div', '&times;', { class: 'remove', 'title': 'Remove' }), { class: type + '_list_item list_item' }));
+							create_list_item(item_list_container, _item, key);
 						}
 					} catch (err) {
 						_didIteratorError2 = true;
@@ -192,6 +206,8 @@ on_load(function () {
 							}
 						}
 					}
+				} else if (key === 'allow_commands') {
+					$('[data-field="' + key + '"]').val(value);
 				} else {
 					var field = $('[data-field="' + key + '"]');
 					if (field.length()) {
@@ -372,5 +388,236 @@ on_load(function () {
 			factorio_ws.close();
 			factorio_ws = null;
 		}
+	}
+
+	function update_server_configs() {
+		var form = $('#server_configs_form');
+		var configs = {};
+		var select = form.find('select');
+		configs[select.data('field')] = select.val();
+		var _iteratorNormalCompletion4 = true;
+		var _didIteratorError4 = false;
+		var _iteratorError4 = undefined;
+
+		try {
+			for (var _iterator4 = form.find('.list_item')[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+				var list_item = _step4.value;
+
+				var type = list_item.data('type');
+				if (!(type in configs)) {
+					configs[type] = [];
+				}
+				configs[type].push(list_item.base_text());
+			}
+		} catch (err) {
+			_didIteratorError4 = true;
+			_iteratorError4 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion4 && _iterator4.return) {
+					_iterator4.return();
+				}
+			} finally {
+				if (_didIteratorError4) {
+					throw _iteratorError4;
+				}
+			}
+		}
+
+		var _iteratorNormalCompletion5 = true;
+		var _didIteratorError5 = false;
+		var _iteratorError5 = undefined;
+
+		try {
+			for (var _iterator5 = form.find('input')[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+				var input = _step5.value;
+
+				var field = input.data('field');
+				var field_type = input.attr('type');
+				if (field === 'lan' || field === 'public') {
+					if (!('visibility' in configs)) {
+						configs['visibility'] = {};
+					}
+					configs['visibility'][field] = input.checked();
+				} else {
+					if (field_type === 'number') {
+						configs[field] = parseInt(input.val());
+					} else if (field_type === 'checkbox') {
+						configs[field] = input.checked();
+					} else {
+						configs[field] = input.val();
+					}
+				}
+			}
+		} catch (err) {
+			_didIteratorError5 = true;
+			_iteratorError5 = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion5 && _iterator5.return) {
+					_iterator5.return();
+				}
+			} finally {
+				if (_didIteratorError5) {
+					throw _iteratorError5;
+				}
+			}
+		}
+
+		ajax({
+			url: url_apply('factorio/`current_game`/update_server_configs'),
+			data: configs,
+			type: 'POST'
+		});
+		show_modal({
+			message: 'The the settings have been saved. ' + 'For them to take effect the Factorio server must be restarted.<br>' + 'Would you like to do that now? ' + 'Click outside message box to ignore.',
+			enter: true,
+			done: reset_factorio
+		});
+	}
+
+	function reset_factorio() {
+		var callback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+
+		ajax({
+			url: url_apply($('#stop_game').data('url')),
+			complete: function complete() {
+				ajax({
+					url: url_apply($('#start_game').data('url')),
+					complete: function complete() {
+						if (is_function(callback)) {
+							callback();
+						}
+					}
+				});
+			}
+		});
+	}
+
+	function create_list_item(element, text, type) {
+		var list_item_element = string_to_element(tag('div', text, { class: type + '_list_item list_item' }, { type: type }));
+		var remove_button = string_to_element(tag('div', '&times;', { class: 'remove', 'title': 'Remove' }));
+		list_item_element.appendChild(remove_button);
+		$(element).append(list_item_element);
+		apply_remove_button(remove_button);
+	}
+
+	function apply_add_button(element) {
+		var label = $(element).attr('id').replace('add_', '');
+		var list_element = $('#' + label + '_list');
+		function enter_logic(value) {
+			var item_elements = $('.' + label + '_list_item');
+			var _iteratorNormalCompletion6 = true;
+			var _didIteratorError6 = false;
+			var _iteratorError6 = undefined;
+
+			try {
+				for (var _iterator6 = item_elements[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+					var list_item = _step6.value;
+
+					var t = list_item.text().replace(list_item.find('.remove').text(), '');
+					if (value === t) {
+						$('#error').show();
+						return;
+					}
+				}
+			} catch (err) {
+				_didIteratorError6 = true;
+				_iteratorError6 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion6 && _iterator6.return) {
+						_iterator6.return();
+					}
+				} finally {
+					if (_didIteratorError6) {
+						throw _iteratorError6;
+					}
+				}
+			}
+
+			create_list_item(list_element, value, label);
+			// $('#overlay_msg').html('')
+			// $('#overlay').hide()
+		}
+		function add_button_logic() {
+			show_modal({
+				label: label.title() + ' Entry ',
+				enter: true,
+				input: true,
+				error_msg: 'That entry already exists',
+				done: enter_logic
+			});
+		}
+		$(element).remove_event('click', add_button_logic).click(add_button_logic);
+	}
+
+	function show_modal() {
+		var _ref3 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+		    _ref3$label = _ref3.label,
+		    label = _ref3$label === undefined ? '' : _ref3$label,
+		    _ref3$message = _ref3.message,
+		    message = _ref3$message === undefined ? '' : _ref3$message,
+		    _ref3$enter = _ref3.enter,
+		    enter = _ref3$enter === undefined ? false : _ref3$enter,
+		    _ref3$input = _ref3.input,
+		    input = _ref3$input === undefined ? false : _ref3$input,
+		    _ref3$error_msg = _ref3.error_msg,
+		    error_msg = _ref3$error_msg === undefined ? '' : _ref3$error_msg,
+		    _ref3$done = _ref3.done,
+		    done = _ref3$done === undefined ? null : _ref3$done;
+
+		var label_html = '';
+		var message_html = '';
+		var enter_html = '';
+		var input_html = '';
+		var error_html = '';
+		if (label) {
+			label_html = tag('label', label);
+		}
+		if (message) {
+			message_html = tag('span', message);
+		}
+		if (enter) {
+			enter_html = tag('button', 'Enter', { id: 'enter_button' });
+		}
+		if (input) {
+			input_html = tag('input', { id: 'new_value' });
+		}
+		if (error_msg) {
+			error_html = tag('div', error_msg, { class: 'hidden', id: 'error' });
+		}
+		$('#overlay').show();
+		$('#overlay_msg').append(error_html + message_html + label_html + input_html + '<br>' + enter_html);
+		if (input) {
+			$('#new_value').element.focus();
+		}
+		if (is_function(done)) {
+			$('#enter_button').click(function () {
+				if (input) {
+					done($('#new_value').val());
+				} else {
+					done();
+				}
+				$('#overlay_msg').html('');
+				$('#overlay').hide();
+			});
+			if (input) {
+				$('#new_value').add_event('keyup', function (e) {
+					if (e.keyCode === 13) {
+						done($('#new_value').val());
+						$('#overlay_msg').html('');
+						$('#overlay').hide();
+					}
+				});
+			}
+		}
+	}
+
+	function apply_remove_button(element) {
+		function remove_button_logic() {
+			$(this).parent().remove();
+		}
+		$(element).remove_event('click', remove_button_logic).click(remove_button_logic);
 	}
 });

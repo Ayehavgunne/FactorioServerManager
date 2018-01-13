@@ -44,7 +44,7 @@ select {
 	padding:2px;
 	cursor:pointer;
 }
-button:hover, select:hover, #logout_button:hover, nav ul li:hover, .chart_tab:hover, #save_server_config:hover, input:hover {
+button:hover, select:hover, #logout_button:hover, nav ul li:hover, .chart_tab:hover, #save_server_config:hover {
 	background-color:#30A800;
 	text-shadow:2px 2px #000000;
 }
@@ -130,10 +130,10 @@ button {
 }
 #overlay_msg {
 	border:1px solid black;
-	width:101px;
-	margin:auto;
 	padding:10px;
 	background-color:#191919;
+	display:table;
+	margin:auto;
 }
 #console_sec, #console_box {
 	width:100%;
@@ -204,6 +204,11 @@ button {
 	height:48px;
 	border-bottom:1px solid #EAFFE2;
 }
+#config_sec .label {
+	min-height:101px;
+	position:relative;
+	overflow:auto;
+}
 #config_sec label:last-child {
 	border-bottom:0;
 }
@@ -218,15 +223,20 @@ button {
 }
 #add_tags, #add_admins {
 	cursor:pointer;
-	float:right;
+	position:absolute;
+	right:5px;
+	top:-2px;
 }
-#admin_list, #tag_list {
-	margin-left:5px;
-	margin-right:10px;
-	float:left;
+#admins_list:after, #tags_list:after {
+	content:"";
+	display:table;
+	clear:both;
+}
+#admins_list, #tags_list {
+	width:calc(100% - 30px);
 }
 #visibility_label {
-	margin-left:10px;
+	padding-left:5px;
 }
 #visibility_label label {
 	margin-left:15px;
@@ -237,6 +247,7 @@ button {
 }
 .column {
 	float:left;
+	width:48%;
 }
 .column:first-of-type {
 	margin-right:20px;
