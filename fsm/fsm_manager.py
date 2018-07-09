@@ -29,12 +29,12 @@ common_paths = {
 		'C:/Program Files (x86)/Steam/steamapps/common/Factorio/bin',
 		'C:/Program Files/Factorio/bin',
 		'C:/Program Files (x86)/Factorio/bin',
-		'{}/Factorio/bin'.format(os.getenv('APPDATA')),
-		'{}/Factorio/bin'.format(os.getenv('LOCALAPPDATA')),
+		f'{os.getenv("APPDATA")}/Factorio/bin',
+		f'{os.getenv("LOCALAPPDATA")}/Factorio/bin',
 	],
 	False: [
-		'{}/.factorio/bin'.format(os.getenv('HOME')),
-		'{}/.local/share/Steam/steamapps/common/Factorio/bin'.format(os.getenv('HOME')),
+		f'{os.getenv("HOME")}/.factorio/bin',
+		f'{os.getenv("HOME")}/.local/share/Steam/steamapps/common/Factorio/bin',
 		'/opt/factorio',
 	],
 }
@@ -58,7 +58,7 @@ def check_current_settings(field_name, callback):
 	field_value = current_settings[field_name]
 	if field_value:
 		set_field_value = not yes_no_prompt(
-			'Would you like to keep the {} set to {}'.format(field_name.replace('_', ' '), field_value))
+			f'Would you like to keep the {field_name.replace("_", " ")} set to {field_value}')
 	else:
 		set_field_value = True
 	if set_field_value:
@@ -73,8 +73,8 @@ def set_factorio_root_path():
 			check_path = check_path / '..'
 			check_path = check_path.resolve()
 			keep_path = yes_no_prompt(
-				'Found Factorio installation at {}\n'
-				'Would you like to use this directory'.format(check_path.as_posix())
+				f'Found Factorio installation at {check_path.as_posix()}\n'
+				f'Would you like to use this directory'
 			)
 			if keep_path:
 				factorio_root_path = check_path.as_posix()

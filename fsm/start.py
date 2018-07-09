@@ -1,20 +1,18 @@
 #!/usr/bin/python3
-import os
 import logging
+import os
 
 import cherrypy
-from ws4py.server.cherrypyserver import WebSocketTool
 from ws4py.server.cherrypyserver import WebSocketPlugin
-
+from ws4py.server.cherrypyserver import WebSocketTool
 
 from fsm import APP_DIR
-from fsm.util import parse_the_args
-from fsm import get_settings
 from fsm import app_settings
-from fsm.web_admin import WebAdmin
+from fsm import get_settings
 from fsm import log
 from fsm.factorio_manager import FactorioManager
-
+from fsm.util import parse_the_args
+from fsm.web_admin import WebAdmin
 
 current_settings = get_settings()
 
@@ -37,7 +35,7 @@ def main(args):
 		app_settings.factorio_instances[name] = FactorioManager(name, instance['port'], instance['root_path'])
 		update = app_settings.factorio_instances[name].check_for_update()
 		if update:
-			log.info('Update Available: ver. {}\tCurrent: {}'.format(update, app_settings.factorio_instances[name].version))
+			log.info(f'Update Available: ver. {update}\tCurrent: {app_settings.factorio_instances[name].version}')
 
 	global_conf = {
 		'global': {
@@ -46,8 +44,8 @@ def main(args):
 			'server.socket_port': args.web_admin_port,
 			'log.screen': False,
 			'server.ssl_module': 'builtin',
-			'server.ssl_certificate': '{}/certs/fsm_cert.pem'.format(APP_DIR),
-			'server.ssl_private_key': '{}/certs/fsm_key.pem'.format(APP_DIR),
+			'server.ssl_certificate': f'{APP_DIR}/certs/fsm_cert.pem',
+			'server.ssl_private_key': f'{APP_DIR}/certs/fsm_key.pem',
 		},
 	}
 	conf = {
@@ -56,17 +54,17 @@ def main(args):
 			'tools.auth.on': True,
 			'tools.log_tracebacks.on': True,
 			'tools.staticdir.on': True,
-			'tools.staticdir.dir': '{}/root'.format(APP_DIR),
-			'log.access_file': '{}/logs/cherrypy_access.log'.format(APP_DIR),
-			'log.error_file': '{}/logs/cherrypy_error.log'.format(APP_DIR),
+			'tools.staticdir.dir': f'{APP_DIR}/root',
+			'log.access_file': f'{APP_DIR}/logs/cherrypy_access.log',
+			'log.error_file': f'{APP_DIR}/logs/cherrypy_error.log',
 		},
 		'/css': {
 			'tools.staticdir.on': True,
-			'tools.staticdir.dir': '{}/css'.format(APP_DIR),
+			'tools.staticdir.dir': f'{APP_DIR}/css',
 		},
 		'/js': {
 			'tools.staticdir.on': True,
-			'tools.staticdir.dir': '{}/js'.format(APP_DIR),
+			'tools.staticdir.dir': f'{APP_DIR}/js',
 		},
 	}
 
@@ -79,7 +77,7 @@ def main(args):
 			if name in app_settings.factorio_instances:
 				app_settings.factorio_instances[name].start()
 
-	log.info('Starting web server on https://0.0.0.0:{}'.format(args.web_admin_port))
+	log.info(f'Starting web server on https://0.0.0.0:{args.web_admin_port}')
 	cherrypy.config.update(global_conf)
 
 	WebSocketPlugin(cherrypy.engine).subscribe()

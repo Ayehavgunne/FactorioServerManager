@@ -1,27 +1,27 @@
 import json
+from collections import deque
+from configparser import ConfigParser
 from datetime import datetime
+from pathlib import Path
+from subprocess import PIPE
+from subprocess import Popen
 from time import sleep
 from urllib import parse
 from urllib import request
-from pathlib import Path
-from subprocess import Popen
-from subprocess import PIPE
-from collections import deque
-from configparser import ConfigParser
 
-from psutil import Process
-from psutil import NoSuchProcess
 from humanize import naturalsize
+from psutil import NoSuchProcess
+from psutil import Process
 
 from fsm import OS_WIN
 from fsm import TOTAL_MEMORY
 from fsm import VIRTUAL_MEMORY
-from fsm import save_settings
 from fsm import app_settings
 from fsm import log
 from fsm import make_log
-from fsm.util import merge_two_dicts
+from fsm import save_settings
 from fsm.util import TqdmUpTo
+from fsm.util import merge_two_dicts
 from fsm.util import run_in_thread
 
 
@@ -29,12 +29,12 @@ from fsm.util import run_in_thread
 
 
 class FactorioManager(object):
-	def __init__(self, name, port, root_path, is_steam=False):
+	def __init__(self, name: str, port: int, root_path, is_steam=False):
 		self.name = name
 		self.port = port
 		self.process = None
 		self.root_path = Path(root_path)
-		self.log = make_log('{}_factorio'.format(name))
+		self.log = make_log(f'{name}_factorio')
 		self.update_available = False
 		self._ps_proc = None
 		self._virtual_mem = VIRTUAL_MEMORY
@@ -142,7 +142,7 @@ class FactorioManager(object):
 
 	@property
 	def save_file(self):
-		return (self.root_path / 'saves' / self.name / '{}.zip'.format(self.name)).resolve()
+		return (self.root_path / 'saves' / self.name / f'{self.name}.zip').resolve()
 
 	@property
 	def player_data(self):
@@ -189,14 +189,14 @@ class FactorioManager(object):
 
 	@property
 	def core_str(self):
-		core = 'core-{}'.format(self.build_platform[:-2])
+		core = f'core-{self.build_platform[:-2]}'
 		if self.build_mode == 'headless':
 			core = core + '_headless'
 		core = core + self.bits
 		return core
 
 	def set_version_info(self):
-		log.info('Getting the version info for {}'.format(self.name))
+		log.info(f'Getting the version info for {self.name}')
 		commands = [self.executable.as_posix(), '--version']
 		p = Popen(commands, stdout=PIPE, stderr=PIPE)
 		std_out, std_err = p.communicate()
@@ -227,24 +227,24 @@ class FactorioManager(object):
 					'total_mem_raw': TOTAL_MEMORY,
 				}
 			except (NoSuchProcess, AttributeError):
-				log.warn('Factorio Process {} does not exist anymore'.format(self.name))
+				log.warn(f'Factorio Process {self.name} does not exist anymore')
 				return
 			self._status_history.appendleft(data)
 			return list(self._status_history)
 
 	@run_in_thread
 	def start(self):
-		log.info('Starting Factorio instance {}'.format(self.name))
+		log.info(f'Starting Factorio instance {self.name}')
 		if self.name in app_settings.factorio_instances:
 			if isinstance(self.process, Popen):
 				# TODO: need to do more here to actually check if it is running
-				log.warn('{} factorio instance is already running'.format(self.name))
+				log.warn(f'{self.name} factorio instance is already running')
 				return
 		if self.name not in app_settings.factorio_instances:
-			log.warn('{} factorio instance does not exist'.format(self.name))
+			log.warn(f'{self.name} factorio instance does not exist')
 			return
 		commands = [self.executable.as_posix(), '--start-server', self.save_file, '--port', str(self.port)]
-		log.debug('Starting {}'.format(self.name))
+		log.debug(f'Starting {self.name}')
 		self.process = Popen(commands, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 		self.output_log()
 
@@ -275,7 +275,7 @@ class FactorioManager(object):
 
 	@run_in_thread
 	def stop(self):
-		log.debug('Stopping {}'.format(self.name))
+		log.debug(f'Stopping {self.name}')
 		if self.process:
 			self.process.terminate()
 			self.process = None
@@ -283,7 +283,7 @@ class FactorioManager(object):
 
 	@run_in_thread
 	def kill(self):
-		log.debug('Killing {}'.format(self.name))
+		log.debug(f'Killing {self.name}')
 		if self.process:
 			self.process.kill()
 			self.process = None
@@ -293,7 +293,7 @@ class FactorioManager(object):
 	def send_command(self, command):
 		# TODO: This does not work. No idea how it should work
 		if self.process:
-			self.process.communicate('{}\n'.format(command).encode())
+			self.process.communicate(f'{command}\n'.encode())
 
 	def create_save_file(self, map_gen_file_path=None, map_settings_path=None, preset=None, map_preview_path=None):
 		if not self.save_file.is_file():

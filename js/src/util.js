@@ -72,22 +72,26 @@ function click_outside_close(element, callback) {
 }
 
 function _create_html(tag, inner_html, attributes={}, data_attr={}, self_closing=false) {
-	let html = '<' + tag
+	let html = `<${tag}`
 	if (!is_array(inner_html) && is_object(inner_html)) {
 		attributes = inner_html
 		inner_html = null
 	}
 	for (let key in attributes) {
-		html = html + ' ' + key + '="' + attributes[key] + '"'
+		if (attributes.hasOwnProperty(key)) {
+			html = `${html} ${key}="${attributes[key]}"`
+		}
 	}
 	for (let key in data_attr) {
-		html = html + ' data-' + key + '="' + data_attr[key] + '"'
+		if (data_attr.hasOwnProperty(key)) {
+			html = `${html} data-${key}="${data_attr[key]}"`
+		}
 	}
 	if (self_closing && !inner_html) {
 		html = ' />'
 	}
 	else {
-		html = html + '>'
+		html = `${html}>`
 		if (inner_html) {
 			if (is_array(inner_html)) {
 				for (let element of inner_html) {
@@ -98,7 +102,7 @@ function _create_html(tag, inner_html, attributes={}, data_attr={}, self_closing
 				html = html + inner_html
 			}
 		}
-		html = html + '</' + tag + '>'
+		html = `${html}</${tag}>`
 	}
 	return html
 }
@@ -150,7 +154,7 @@ class EnhancedElement {
 		}
 	}
 
-	length() {
+	static length() {
 		return 1
 	}
 
@@ -305,10 +309,10 @@ class EnhancedElement {
 
 	data(data_name, data_attr=null) {
 		if (is_null(data_attr)) {
-			return this.element.getAttribute('data-' + data_name)
+			return this.element.getAttribute(`data-${data_name}`)
 		}
 		else {
-			this.element.setAttribute('data-' + data_name, data_attr)
+			this.element.setAttribute(`data-${data_name}`, data_attr)
 			return this
 		}
 	}
@@ -588,11 +592,11 @@ class EnhancedElements {
 
 	data(data_name, data_attr=null, index=0) {
 		if (is_null(data_attr)) {
-			return this.elements.item(index).getAttribute('data-' + data_name)
+			return this.elements.item(index).getAttribute(`data-${data_name}`)
 		}
 		else {
 			for (let element of this.elements) {
-				element.setAttribute('data-' + data_name, data_attr)
+				element.setAttribute(`data-${data_name}`, data_attr)
 			}
 		}
 		return this
@@ -797,10 +801,10 @@ function string_to_element(str) {
 
 function data(element, data_name, data_attr=null) {
 	if (!data_attr) {
-		return element.getAttribute('data-' + data_name)
+		return element.getAttribute(`data-${data_name}`)
 	}
 	else {
-		element.setAttribute('data-' + data_name, data_attr)
+		element.setAttribute(`data-${data_name}`, data_attr)
 	}
 }
 
@@ -849,7 +853,7 @@ function ajax({url, type='GET', data=null, content_type=null, responce_type='tex
 }
 
 function websocket({url, on_message=null, on_open=null, on_close=null, on_error=null}={}) {
-	url = 'wss://' + window.location.host + '/' + url
+	url = `wss://${window.location.host}/${url}`
 	let conn = new WebSocket(url)
 
 	window.onunload = function() {
@@ -861,21 +865,21 @@ function websocket({url, on_message=null, on_open=null, on_close=null, on_error=
 	}
 
 	conn.onopen = function(evt) {
-		print('opened WebSocket ' + url)
+		print(`opened WebSocket ${url}`)
 		if (is_function(on_open)) {
 			on_open(evt)
 		}
 	}
 
 	conn.onclose = function(evt) {
-		print('closing WebSocket ' + url)
+		print(`closing WebSocket ${url}`)
 		if (is_function(on_close)) {
 			on_close(evt)
 		}
 	}
 
 	conn.onerror = function(evt) {
-		print('error on WebSocket ' + url)
+		print(`error on WebSocket ${url}`)
 		if (is_function(on_error)) {
 			on_error(evt)
 		}

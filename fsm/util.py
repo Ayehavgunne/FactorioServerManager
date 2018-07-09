@@ -21,8 +21,8 @@ def run_in_thread(func):
 			try:
 				func(*args, **kwargs)
 			except Exception as e:
-				log.exception(msg='Parallelized function had an exception: {}'.format(e))
-		func_hl = Thread(target=catch_exceptions, name='Thread_{}'.format(func.__name__))
+				log.exception(msg=f'Parallelized function had an exception: {e}')
+		func_hl = Thread(target=catch_exceptions, name=f'Thread_{func.__name__}')
 		func_hl.start()
 		return func_hl
 	return async_func
@@ -59,7 +59,7 @@ class TqdmUpTo(tqdm):
 
 
 def get_html(file_path, format_kwargs=None):
-	with open('{}/html/{}.html'.format(APP_DIR, file_path)) as html_file:
+	with open(f'{APP_DIR}/html/{file_path}.html') as html_file:
 		html = html_file.read()
 	if format_kwargs:
 		html = html.format(**format_kwargs)
@@ -67,11 +67,11 @@ def get_html(file_path, format_kwargs=None):
 
 
 def make_prompt(msg, **kwargs):
-	return prompt('\n{}\n'.format(msg), **kwargs)
+	return prompt(f'\n{msg}\n', **kwargs)
 
 
 def yes_no_prompt(msg, **kwargs):
-	return prompt('\n{}? (y/n)\n'.format(msg), validator=BooleanValidator(), **kwargs)[0] in ('y', '1', 't')
+	return prompt(f'\n{msg}? (y/n)\n', validator=BooleanValidator(), **kwargs)[0] in ('y', '1', 't')
 
 
 def parse_the_args():

@@ -59,11 +59,11 @@ def require(*conditions):
 class AuthController(object):
 	@staticmethod
 	def on_login(username):
-		log.info('User {} logged in'.format(username))
+		log.info(f'User {username} logged in')
 
 	@staticmethod
 	def on_logout(username):
-		log.info('User {} logged out'.format(username))
+		log.info(f'User {username} logged out')
 
 	@staticmethod
 	def get_loginform(username, msg="Enter login information", from_page='/'):
@@ -106,7 +106,7 @@ class CustomWS(WebSocket):
 		self.broadcast = True
 
 	def opened(self):
-		log.debug('{} Socket was opened'.format(self.__class__.__name__.replace('WSHandler', '')))
+		log.debug(f'{self.__class__.__name__.replace("WSHandler", "")} Socket was opened')
 
 	def close(self, code=1000, reason=''):
 		super().close(code, reason)
@@ -114,7 +114,7 @@ class CustomWS(WebSocket):
 
 	def closed(self, code, reason=None):
 		self.broadcast = False
-		log.debug('{} Socket was closed'.format(self.__class__.__name__.replace('WSHandler', '')))
+		log.debug(f'{self.__class__.__name__.replace("WSHandler", "")} Socket was closed')
 
 	def received_message(self, message):
 		log.info(message)
@@ -157,7 +157,7 @@ class Ws(object):
 	@cherrypy.tools.websocket(handler_cls=FactorioWSHandler)
 	def factorio_status(self, name):
 		handler = cherrypy.request.ws_handler
-		log.debug('Factorio Status socket handler created {}'.format(handler))
+		log.debug(f'Factorio Status socket handler created {handler}')
 		handler.set_instance(instances[name])
 		cherrypy.engine.factorio_ws_handler = handler
 
@@ -165,7 +165,7 @@ class Ws(object):
 	@cherrypy.tools.websocket(handler_cls=LogWSHandler)
 	def log_tail(self, name):
 		handler = cherrypy.request.ws_handler
-		log.debug('Log Tail socket handler created {}'.format(handler))
+		log.debug(f'Log Tail socket handler created {handler}')
 		handler.set_instance(instances[name])
 		cherrypy.engine.log_ws_handler = handler
 
@@ -178,7 +178,7 @@ class FactorioDispatch(object):
 
 	@cherrypy.expose()
 	def stop(self, name):
-		log.info('Trying to stop {}'.format(name))
+		log.info(f'Trying to stop {name}')
 		instances[name].stop()
 
 	@cherrypy.expose()
@@ -252,8 +252,8 @@ class WebAdmin(object):
 		sess = cherrypy.session
 		username = sess.get(SESSION_KEY, None)
 		games = ''.join([
-			'<option value={0}>{0}</option>'.format(name)
-			if x != 0 else '<option value={0} selected=true>{0}</option>'.format(name)
+			f'<option value={name}>{name}</option>'
+			if x != 0 else f'<option value={name} selected=true>{name}</option>'
 			for x, name in enumerate(instances.keys())
 		])
 		return get_html('fsm', {'username': username, 'games': games})

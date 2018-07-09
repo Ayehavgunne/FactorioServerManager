@@ -1,11 +1,11 @@
-import os
+from pathlib import Path
 from setuptools import setup
 
 import fsm
 
 
 def read(fname):
-	return open(os.path.join(os.path.dirname(__file__), fname)).read()
+	return (Path(__file__) / '..' / fname).resolve().open().read()
 
 
 package_name = fsm.__name__
@@ -20,6 +20,8 @@ setup(
 	keywords='factorio server managment web interface',
 	url='https://github.com/Ayehavgunne/FSM',
 	packages=[package_name],
+	package_data={},
+	include_package_data=True,
 	long_description=read('README.md'),
 	classifiers=[
 		'Development Status :: 1 - Planning',
@@ -45,7 +47,7 @@ setup(
 		'Topic :: Internet :: WWW/HTTP'
 	],
 	entry_points={
-		'console_scripts': ['fsm = {}.fsm_manager:run'.format(package_name)]
+		'console_scripts': [f'fsm = {package_name}.fsm_manager:run']
 	},
 	install_requires=['cherrypy', 'prompt_toolkit', 'psutil', 'humanize', 'tqdm', 'ws4py']
 )
