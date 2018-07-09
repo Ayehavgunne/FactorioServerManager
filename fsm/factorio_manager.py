@@ -25,9 +25,6 @@ from fsm.util import merge_two_dicts
 from fsm.util import run_in_thread
 
 
-# TODO Need to account for Steam in some of these paths
-
-
 class FactorioManager(object):
 	def __init__(self, name: str, port: int, root_path, is_steam=False):
 		self.name = name

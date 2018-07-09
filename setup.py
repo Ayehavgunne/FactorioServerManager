@@ -20,7 +20,7 @@ setup(
 	keywords='factorio server managment web interface',
 	url='https://github.com/Ayehavgunne/FSM',
 	packages=[package_name],
-	package_data={},
+	package_dir={package_name: 'fsm'},
 	include_package_data=True,
 	long_description=read('README.md'),
 	classifiers=[

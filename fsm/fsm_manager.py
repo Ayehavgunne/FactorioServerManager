@@ -24,7 +24,7 @@ from fsm.validators import FactorioInstanceNameValidator
 from fsm import log
 
 common_paths = {
-	True: [
+	True: [  # Windows
 		'C:/Program Files/Steam/steamapps/common/Factorio/bin',
 		'C:/Program Files (x86)/Steam/steamapps/common/Factorio/bin',
 		'C:/Program Files/Factorio/bin',
@@ -32,7 +32,7 @@ common_paths = {
 		f'{os.getenv("APPDATA")}/Factorio/bin',
 		f'{os.getenv("LOCALAPPDATA")}/Factorio/bin',
 	],
-	False: [
+	False: [  # Linux
 		f'{os.getenv("HOME")}/.factorio/bin',
 		f'{os.getenv("HOME")}/.local/share/Steam/steamapps/common/Factorio/bin',
 		'/opt/factorio',
