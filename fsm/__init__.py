@@ -5,7 +5,7 @@ import json
 import logging
 from pathlib import Path
 
-APP_DIR = (Path(__file__) / '..' / '..').resolve()
+APP_DIR = (Path(__file__) / '..').resolve()
 
 from psutil import virtual_memory
 

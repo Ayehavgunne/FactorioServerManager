@@ -83,7 +83,7 @@ def parse_the_args():
 
 	parser.add_argument(
 		'--setup', action='store_true', dest='run_setup', default=False,
-		help='The path to the root of the Factorio server installation'
+		help='Setup for the FSM'
 	)
 	parser.add_argument(
 		'--web_admin_port', action='store', dest='web_admin_port', type=int,
