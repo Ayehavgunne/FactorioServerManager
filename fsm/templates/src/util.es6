@@ -18,7 +18,7 @@ function is_array(val) {
 function is_element(val) {
 	return (
 		typeof HTMLElement === "object" ? val instanceof HTMLElement :
-			val && typeof val === "object" && val !== null && val.nodeType === 1 && typeof val.nodeName === "string"
+			val && typeof val === "object" && val.nodeType === 1 && typeof val.nodeName === "string"
 	)
 }
 

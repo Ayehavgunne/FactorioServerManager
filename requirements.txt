@@ -1,7 +1,4 @@
-cherrypy
-jinja2
 prompt_toolkit
 psutil
 humanize
-tqdm
-ws4py
+quart

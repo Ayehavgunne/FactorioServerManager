@@ -205,3 +205,5 @@ fabric.properties
 
 /node_modules/
 /logs/*
+fsm/config/fsm_config.json
+fsm/fsm.pid
