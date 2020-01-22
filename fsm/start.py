@@ -2,12 +2,12 @@
 import logging
 import os
 
-import cherrypy
+import uvicorn
+from cactuar import create_app
 from fsm import APP_DIR, app_settings, get_settings, log
 from fsm.factorio_manager import FactorioManager
 from fsm.util import parse_the_args
 from fsm.web_admin import WebAdmin
-from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 
 current_settings = get_settings()
 
@@ -31,35 +31,16 @@ def main(args):
         update = app_settings.factorio_instances[name].check_for_update()
         if update:
             log.info(
-                f"Update Available: ver. {update}\tCurrent: {app_settings.factorio_instances[name].version}"
+                f"Update Available: ver. {update}\tCurrent: "
+                f"{app_settings.factorio_instances[name].version}"
             )
 
-    global_conf = {
-        "global": {
-            "engine.autoreload.on": False,
-            "server.socket_host": "0.0.0.0",
-            "server.socket_port": args.web_admin_port,
-            "log.screen": False,
-        }
-    }
-    conf = {
-        "/": {
-            "tools.sessions.on": True,
-            "tools.auth.on": True,
-            "tools.log_tracebacks.on": True,
-            "tools.staticdir.on": True,
-            "tools.staticdir.dir": f"{APP_DIR}/static",
-            "log.access_file": f"{APP_DIR}/logs/cherrypy_access.log",
-            "log.error_file": f"{APP_DIR}/logs/cherrypy_error.log",
-        },
-        "/css": {
-            "tools.staticdir.on": True,
-            "tools.staticdir.dir": f"{APP_DIR}/templates/css",
-        },
-    }
+    # "tools.auth.on": True,
+    # "log.access_file": f"{APP_DIR}/logs/cherrypy_access.log",
+    # "log.error_file": f"{APP_DIR}/logs/cherrypy_error.log",
 
-    if args.debug_cherrypy:
-        global_conf["global"]["log.screen"] = True
+    # if args.debug_cherrypy:
+    #     global_conf["global"]["log.screen"] = True
 
     if args.launch_factorios:
         names = args.launch_factorios.split(",")
@@ -68,14 +49,25 @@ def main(args):
                 app_settings.factorio_instances[name].start()
 
     log.info(f"Starting web server on http://0.0.0.0:{args.web_admin_port}")
-    cherrypy.config.update(global_conf)
+    app = create_app(WebAdmin)
+    app.add_static_route(f"{APP_DIR}/static")
+    app.add_static_route(f"{APP_DIR}/templates/css", "css")
 
-    WebSocketPlugin(cherrypy.engine).subscribe()
-    cherrypy.tools.websocket = WebSocketTool()
+    @app.on_startup
+    def start():
+        log.info("FSM server started")
 
-    cherrypy.tree.mount(root=WebAdmin(), config=conf)
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+    @app.on_shutdown
+    def stop():
+        log.info("FSM server stopped")
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=args.web_admin_port,
+        log_level="info",
+        access_log=False,
+    )
 
 
 if __name__ == "__main__":

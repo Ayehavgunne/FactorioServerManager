@@ -1,4 +1,7 @@
+jinja2
+tqdm
 prompt_toolkit
 psutil
 humanize
-quart
+cactuar
+uvicorn

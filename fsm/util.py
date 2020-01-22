@@ -68,16 +68,6 @@ env = Environment(
 )
 
 
-def register_filter(jinja_name: str = None):
-    def wrapper(func):
-        if jinja_name is not None:
-            env.filters[jinja_name] = func
-        else:
-            env.filters[func.__name__] = func
-
-    return wrapper
-
-
 def render_template(
     context: dict = None, page: str = "login", title: str = "Login"
 ) -> str:
@@ -103,8 +93,8 @@ def yes_no_prompt(msg, **kwargs):
 def parse_the_args():
     log.debug("Parsing the arguments from the command line")
     parser = argparse.ArgumentParser(
-        description="FSM is not the Flying Spagetti Monster (at least in this case). It is, however, "
-        "the Factorio Server Manager."
+        description="FSM is not the Flying Spagetti Monster (at least in this case). "
+        "It is, however, the Factorio Server Manager."
     )
 
     parser.add_argument(
@@ -120,17 +110,18 @@ def parse_the_args():
         dest="web_admin_port",
         type=int,
         default=int(current_settings["web_admin_port"]),
-        help="The port that the Adminitration UI will bind to. Setting this will ignore the value in the config file "
-        "for this instance only.",
+        help="The port that the Adminitration UI will bind to. Setting this will "
+        "ignore the value in the config file for this instance only.",
     )
     parser.add_argument(
         "--launch_factorio_instances",
         action="store",
         dest="launch_factorios",
         default=None,
-        help="Will automatically start up the Factorio server(s) with the launching of FSM instead of having to start "
-        "factorio from the web interface. Useful for starting the Factorio server(s) at boot of host machine. Just "
-        "enter the names of the instances to start seperated by a comma",
+        help="Will automatically start up the Factorio server(s) with the launching of "
+        "FSM instead of having to start factorio from the web interface. Useful for "
+        "starting the Factorio server(s) at boot of host machine. Just enter the "
+        "names of the instances to start seperated by a comma",
     )
     parser.add_argument(
         "--debug_cherrypy",
@@ -151,14 +142,16 @@ def parse_the_args():
         action="store_true",
         dest="start_in_background",
         default=False,
-        help="Starts FSM in the background and will continue to run even after this shell has closed",
+        help="Starts FSM in the background and will continue to run even after this "
+        "shell has closed",
     )
     parser.add_argument(
         "--stop",
         action="store_true",
         dest="stop",
         default=False,
-        help="Shuts down the FSM server which in tern will shutdown all Factorio game instances that were started by it",
+        help="Shuts down the FSM server which in tern will shutdown all Factorio game "
+        "instances that were started by it",
     )
 
     return parser.parse_args()

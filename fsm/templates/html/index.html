@@ -12,7 +12,7 @@
         <meta name="theme-color" content="#f05b1b" />
         <link type="text/css" rel="stylesheet" href="/css/{{ page }}.css" />
         <script>
-            window.props = {{props|json}};
+            window.props = {{props|to_json}};
         </script>
         <script type="module" src="/index.js"></script>
     </head>
