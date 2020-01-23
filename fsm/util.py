@@ -5,12 +5,12 @@ import uuid
 from functools import wraps
 from threading import Thread
 
-from prompt_toolkit import prompt
-
-from fsm import APP_DIR, current_settings, log
-from fsm.validators import BooleanValidator
 from jinja2 import Environment, PackageLoader, select_autoescape
+from prompt_toolkit import prompt
 from tqdm import tqdm
+
+from fsm import current_settings, log
+from fsm.validators import BooleanValidator
 
 
 def run_in_thread(func):
@@ -63,8 +63,7 @@ class TqdmUpTo(tqdm):
 
 
 env = Environment(
-    loader=PackageLoader("fsm", f"{APP_DIR}/templates"),
-    autoescape=select_autoescape(["html", "xml"]),
+    loader=PackageLoader("fsm"), autoescape=select_autoescape(["html", "xml"]),
 )
 
 

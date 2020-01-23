@@ -207,3 +207,4 @@ fabric.properties
 /logs/*
 fsm/config/fsm_config.json
 fsm/fsm.pid
+/package-lock.json

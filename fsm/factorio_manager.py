@@ -8,10 +8,19 @@ from time import sleep
 from typing import Dict
 from urllib import parse, request
 
-from fsm import OS_WIN, TOTAL_MEMORY, VIRTUAL_MEMORY, app_settings, log, make_log, save_settings
-from fsm.util import TqdmUpTo, merge_two_dicts, run_in_thread
 from humanize import naturalsize
 from psutil import NoSuchProcess, Process
+
+from fsm import (
+    OS_WIN,
+    TOTAL_MEMORY,
+    VIRTUAL_MEMORY,
+    app_settings,
+    log,
+    make_log,
+    save_settings,
+)
+from fsm.util import TqdmUpTo, merge_two_dicts, run_in_thread
 
 
 class FactorioManager(object):
@@ -189,9 +198,9 @@ class FactorioManager(object):
         if self.build_platform[-2:] == "64":
             return "64"
         else:
-            return (
-                "32"
-            )  # I don't have any 32 bit systems so I wasn't sure what factorio would respond with
+            # I don't have any 32 bit systems so I wasn't sure what factorio would
+            # respond with
+            return "32"
 
     @property
     def core_str(self):

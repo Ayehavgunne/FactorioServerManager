@@ -4,6 +4,7 @@ import os
 
 import uvicorn
 from cactuar import create_app
+
 from fsm import APP_DIR, app_settings, get_settings, log
 from fsm.factorio_manager import FactorioManager
 from fsm.util import parse_the_args
@@ -51,7 +52,7 @@ def main(args):
     log.info(f"Starting web server on http://0.0.0.0:{args.web_admin_port}")
     app = create_app(WebAdmin)
     app.add_static_route(f"{APP_DIR}/static")
-    app.add_static_route(f"{APP_DIR}/templates/css", "css")
+    app.add_static_route(f"{APP_DIR}/templates/css", "/css")
 
     @app.on_startup
     def start():

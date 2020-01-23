@@ -1,13 +1,14 @@
 __version__ = "0.1.0"
 
-import os
 import json
 import logging
+import os
+import shutil
 from pathlib import Path
 
-APP_DIR = (Path(__file__) / "..").resolve()
-
 from psutil import virtual_memory
+
+APP_DIR = (Path(__file__) / "..").resolve()
 
 
 def make_log(
@@ -54,11 +55,17 @@ config_path = APP_DIR / "config" / "fsm_config.json"
 
 
 def get_settings() -> dict:
+    if not config_path.exists():
+        shutil.copyfile(
+            config_path.with_name("fsm_config.json.example").as_posix(),
+            config_path.as_posix(),
+        )
     with config_path.open() as fsm_config_file:
         try:
             return json.load(fsm_config_file)
         except json.decoder.JSONDecodeError:
             log.error("Check on the fsm_config.json file, it may be malformed")
+            raise
 
 
 current_settings = get_settings()
@@ -74,10 +81,9 @@ class AppSettings:
 app_settings = AppSettings()
 
 
-from fsm import util
-
-
 def save_settings(settings: dict, conf_path: Path = config_path) -> None:
+    from fsm import util
+
     with conf_path.open("r+") as fsm_config_file:
         settings = util.merge_two_dicts(settings, json.load(fsm_config_file))
         fsm_config_file.seek(0)

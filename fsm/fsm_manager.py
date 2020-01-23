@@ -1,27 +1,20 @@
 #!/usr/bin/python3
 import os
 import sys
-
 from pathlib import Path
-from subprocess import Popen
-from subprocess import DEVNULL
+from subprocess import DEVNULL, Popen
 
 from psutil import Process
 
-from fsm import OS_WIN
-from fsm.util import hash_pass
-from fsm.util import make_prompt
-from fsm.util import yes_no_prompt
-from fsm.util import parse_the_args
+from fsm import OS_WIN, current_settings, log, save_settings
 from fsm.start import main
-
-from fsm import save_settings
-from fsm import current_settings
-from fsm.validators import PortNumberValidator
-from fsm.validators import FactorioRootValidator
-from fsm.validators import FactorioPortNumberValidator
-from fsm.validators import FactorioInstanceNameValidator
-from fsm import log
+from fsm.util import hash_pass, make_prompt, parse_the_args, yes_no_prompt
+from fsm.validators import (
+    FactorioInstanceNameValidator,
+    FactorioPortNumberValidator,
+    FactorioRootValidator,
+    PortNumberValidator,
+)
 
 common_paths = {
     True: [  # Windows
